@@ -128,8 +128,9 @@ const bannerOffset =
 					}
 			}
 
-			// Load the hue from local storage
-			const hue = localStorage.getItem('hue') || configHue;
+			// 站点配色以 config.ts 的 themeColor.hue 为准。
+			// 不读取 localStorage，避免浏览器里的旧值长期覆盖配置（改配置后刷新即生效）。
+			const hue = configHue;
 			document.documentElement.style.setProperty('--hue', hue);
 
 			// calculate the --banner-height-extend, which needs to be a multiple of 4 to avoid blurry text

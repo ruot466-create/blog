@@ -14,8 +14,9 @@ export function getDefaultHue(): number {
 }
 
 export function getHue(): number {
-	const stored = localStorage.getItem("hue");
-	return stored ? Number.parseInt(stored, 10) : getDefaultHue();
+	// 站点配色以 config.ts 的 themeColor.hue 为准，忽略 localStorage，
+	// 避免浏览器里的旧值长期覆盖配置（改了 hue 之后刷新即生效）。
+	return getDefaultHue();
 }
 
 export function setHue(hue: number): void {
