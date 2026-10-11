@@ -118,7 +118,10 @@
         }
     }
 
-    if (audio && TRACKS.length) {
+    if (audio && TRACKS.length && !audio.__mpInited) {
+        // Swup 换页会重跑本脚本：同一个 <audio> 元素只初始化一次，
+        // 否则 load(0) 会把播放进度和当前曲目重置回第一首
+        audio.__mpInited = true;
         audio.volume = 0.6;
         load(0, false);
 
