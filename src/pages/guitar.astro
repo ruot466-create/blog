@@ -281,38 +281,6 @@ import MainGridLayout from "../layouts/MainGridLayout.astro";
             src.start(ac.currentTime + (delay || 0));
         }
 
-        // ---- 完整吉他（SVG） ----
-        const guitarSvg = document.getElementById("guitar-svg");
-        const NS = "http://www.w3.org/2000/svg";
-        const FRETS = 15;
-        const NUT_Y = 84;
-        const SCALE_LEN = 560;
-        const CX = 170;
-        const BODY_TOP = 406;
-        const BODY_BOT = 704;
-        const stringEls = [];
-
-        // 第 n 品的位置（真实等比递减）
-        function fretY(n) { return NUT_Y + SCALE_LEN * (1 - Math.pow(2, -n / 12)); }
-        // 某高度处第 i 根弦的横坐标（琴枕到琴桥有张角）
-        function stringX(i, y) {
-            const t = Math.max(0, Math.min(1.2, (y - NUT_Y) / SCALE_LEN));
-            const w = 42 + 28 * t;
-            return CX + (i - 2.5) * (w / 5);
-        }
-        function svgEl(tag, attrs) {
-            const e = document.createElementNS(NS, tag);
-            for (const k in attrs) e.setAttribute(k, attrs[k]);
-            return e;
-        }
-        function vibrateString(i) {
-            const p = stringEls[i];
-            if (!p) return;
-            p.classList.remove("vib");
-            void p.getBoundingClientRect();
-            p.classList.add("vib");
-        }
-
         // ---- 琴弦 ----
         const wrap = document.getElementById("guitar-strings");
         const nodes = [];
