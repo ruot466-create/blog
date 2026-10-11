@@ -12,9 +12,26 @@ import MainGridLayout from "../layouts/MainGridLayout.astro";
 
             <div id="guitar-strings" class="flex flex-col gap-5 py-4 select-none touch-none"></div>
 
-            <p id="guitar-hint" class="text-xs text-neutral-400 mt-7">
-                提示：这是用 Karplus-Strong 算法实时合成的声音，没有任何音频文件。
-            </p>
+            <div class="mt-9 pt-7 border-t border-dashed border-[var(--line-divider)]">
+                <div class="font-bold text-lg mb-1">和弦</div>
+                <p class="text-xs text-neutral-400 mb-4">点一下 = 从低音弦扫到高音弦</p>
+                <div id="guitar-chords" class="flex flex-wrap gap-2"></div>
+            </div>
+
+            <div class="mt-9 pt-7 border-t border-dashed border-[var(--line-divider)]">
+                <div class="font-bold text-lg mb-1">节拍器</div>
+                <p class="text-xs text-neutral-400 mb-4">练琴用，速度可调</p>
+                <div class="flex items-center gap-4 flex-wrap">
+                    <button id="metro-toggle"
+                        class="btn-regular h-10 px-5 rounded-lg font-bold active:scale-95 transition text-[var(--btn-content)]">开始</button>
+                    <div class="flex items-center gap-3 flex-1 min-w-[200px]">
+                        <input id="metro-bpm" type="range" min="40" max="200" value="90"
+                            class="flex-1 h-1.5 accent-[var(--primary)]" aria-label="速度">
+                        <span id="metro-value" class="text-sm font-bold w-16 text-right">90 BPM</span>
+                    </div>
+                    <div id="metro-dot" class="w-3.5 h-3.5 rounded-full bg-[var(--btn-regular-bg)] transition"></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -48,6 +65,15 @@ import MainGridLayout from "../layouts/MainGridLayout.astro";
             70%  { transform: translateY(-0.8px) scaleY(1.1); }
             100% { transform: translateY(0) scaleY(1); }
         }
+        .chord-btn {
+            padding: 0.45rem 0.95rem; border-radius: 0.6rem;
+            background: var(--btn-regular-bg); color: var(--btn-content);
+            font-weight: 700; font-size: 0.9rem; border: 0; cursor: pointer;
+            transition: transform 0.1s ease, background 0.15s ease;
+        }
+        .chord-btn:hover { background: var(--btn-regular-bg-hover); }
+        .chord-btn:active { transform: scale(0.94); background: var(--btn-regular-bg-active); }
+        .metro-hit { background: var(--primary) !important; transform: scale(1.5); }
     </style>
 
     <script>
@@ -60,7 +86,24 @@ import MainGridLayout from "../layouts/MainGridLayout.astro";
             { note: "E4", freq: 329.63, gauge: 2.0 },
         ];
 
+        // 常用和弦：从低音弦到高音弦的组成音
+        const CHORDS = {
+            "C":    [130.81, 164.81, 196.0, 261.63],
+            "G":    [98.0, 123.47, 146.83, 196.0],
+            "Am":   [110.0, 130.81, 164.81, 220.0],
+            "Em":   [82.41, 98.0, 123.47, 164.81],
+            "Dm":   [146.83, 174.61, 220.0, 293.66],
+            "F":    [87.31, 110.0, 130.81, 174.61],
+            "D":    [146.83, 185.0, 220.0, 293.66],
+            "E":    [82.41, 123.47, 164.81, 207.65],
+            "A":    [110.0, 138.59, 164.81, 220.0],
+            "G7":   [98.0, 123.47, 146.83, 174.61],
+            "Cadd9": [130.81, 164.81, 196.0, 293.66],
+            "Am7":  [110.0, 130.81, 164.81, 196.0],
+        };
+
         let audioCtx = null;
+
         function getCtx() {
             if (!audioCtx) {
                 const Ctor = window.AudioContext || window.webkitAudioContext;
@@ -72,7 +115,7 @@ import MainGridLayout from "../layouts/MainGridLayout.astro";
         }
 
         // Karplus-Strong：噪声激励 + 延迟线平均滤波，物理建模拨弦
-        function pluck(freq, velocity) {
+        function pluck(freq, velocity, delay) {
             const ac = getCtx();
             if (!ac) return;
             const sr = ac.sampleRate;
@@ -91,12 +134,13 @@ import MainGridLayout from "../layouts/MainGridLayout.astro";
             gain.gain.value = 0.32 * (velocity === undefined ? 1 : velocity);
             src.connect(gain);
             gain.connect(ac.destination);
-            src.start();
+            src.start(ac.currentTime + (delay || 0));
         }
 
+        // ---- 琴弦 ----
         const wrap = document.getElementById("guitar-strings");
+        const nodes = [];
         if (wrap) {
-            const nodes = [];
             TUNING.forEach(function (s) {
                 const btn = document.createElement("button");
                 btn.type = "button";
@@ -114,11 +158,14 @@ import MainGridLayout from "../layouts/MainGridLayout.astro";
                 nodes.push({ el: btn, freq: s.freq, touched: false });
             });
 
-            function strike(node, velocity) {
-                pluck(node.freq, velocity);
+            function flash(node) {
                 node.el.classList.remove("sounding");
                 void node.el.offsetWidth;
                 node.el.classList.add("sounding");
+            }
+            function strike(node, velocity) {
+                pluck(node.freq, velocity);
+                flash(node);
             }
 
             nodes.forEach(function (node) {
@@ -129,16 +176,84 @@ import MainGridLayout from "../layouts/MainGridLayout.astro";
                     strike(node, 1);
                 });
                 node.el.addEventListener("pointerenter", function (e) {
-                    if (e.buttons !== 1) return;
-                    if (node.touched) return;
+                    if (e.buttons !== 1 || node.touched) return;
                     node.touched = true;
                     strike(node, 0.75);
                 });
             });
-
             document.addEventListener("pointerup", function () {
                 nodes.forEach(function (n) { n.touched = false; });
             });
         }
+
+        // ---- 和弦 ----
+        const chordWrap = document.getElementById("guitar-chords");
+        if (chordWrap) {
+            Object.keys(CHORDS).forEach(function (name) {
+                const b = document.createElement("button");
+                b.type = "button";
+                b.className = "chord-btn";
+                b.textContent = name;
+                b.addEventListener("click", function () {
+                    const notes = CHORDS[name];
+                    notes.forEach(function (f, i) { pluck(f, 0.9, i * 0.045); });
+                    // 让对应的弦也抖一下
+                    nodes.forEach(function (n, i) {
+                        if (i < notes.length) {
+                            setTimeout(function () { flash(n); }, i * 45);
+                        }
+                    });
+                });
+                chordWrap.appendChild(b);
+            });
+        }
+
+        // ---- 节拍器 ----
+        const metroBtn = document.getElementById("metro-toggle");
+        const bpmInput = document.getElementById("metro-bpm");
+        const bpmValue = document.getElementById("metro-value");
+        const metroDot = document.getElementById("metro-dot");
+        let metroTimer = null;
+        let metroOn = false;
+
+        function tick() {
+            const ac = getCtx();
+            if (!ac) return;
+            const osc = ac.createOscillator();
+            const g = ac.createGain();
+            osc.frequency.value = 1200;
+            g.gain.setValueAtTime(0.28, ac.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.06);
+            osc.connect(g);
+            g.connect(ac.destination);
+            osc.start();
+            osc.stop(ac.currentTime + 0.07);
+            metroDot?.classList.add("metro-hit");
+            setTimeout(function () { metroDot?.classList.remove("metro-hit"); }, 100);
+        }
+
+        function startMetro() {
+            const bpm = Number(bpmInput.value) || 90;
+            const interval = 60000 / bpm;
+            tick();
+            metroTimer = setInterval(tick, interval);
+            metroOn = true;
+            if (metroBtn) metroBtn.textContent = "停止";
+        }
+
+        function stopMetro() {
+            if (metroTimer) clearInterval(metroTimer);
+            metroTimer = null;
+            metroOn = false;
+            if (metroBtn) metroBtn.textContent = "开始";
+        }
+
+        metroBtn?.addEventListener("click", function () {
+            if (metroOn) stopMetro(); else startMetro();
+        });
+        bpmInput?.addEventListener("input", function () {
+            if (bpmValue) bpmValue.textContent = bpmInput.value + " BPM";
+            if (metroOn) { stopMetro(); startMetro(); }
+        });
     </script>
 </MainGridLayout>
