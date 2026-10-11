@@ -12,24 +12,80 @@ import MainGridLayout from "../layouts/MainGridLayout.astro";
 
             <div id="guitar-strings" class="flex flex-col gap-5 py-4 select-none touch-none"></div>
 
+            <div class="mt-7 pt-6 border-t border-dashed border-[var(--line-divider)]">
+                <div class="font-bold text-lg mb-1">音色</div>
+                <p class="text-xs text-neutral-400 mb-4">换一种拾音方式，声音立刻不一样</p>
+                <div id="guitar-tones" class="flex flex-wrap gap-2"></div>
+                <canvas id="guitar-vis" height="90" class="w-full mt-5 rounded-xl bg-[var(--btn-regular-bg)]"></canvas>
+            </div>
+
             <div class="mt-9 pt-7 border-t border-dashed border-[var(--line-divider)]">
                 <div class="font-bold text-lg mb-1">和弦</div>
                 <p class="text-xs text-neutral-400 mb-4">点一下 = 从低音弦扫到高音弦</p>
                 <div id="guitar-chords" class="flex flex-wrap gap-2"></div>
+                <div id="guitar-shape" class="mt-5 flex justify-center"></div>
+                <p class="text-xs text-neutral-400 mt-2 text-center">点上面的和弦 → 看指法</p>
             </div>
 
             <div class="mt-9 pt-7 border-t border-dashed border-[var(--line-divider)]">
+                <div class="font-bold text-lg mb-1">音阶</div>
+                <p class="text-xs text-neutral-400 mb-4">指板上标出音阶位置，练 solo 用</p>
+                <div id="guitar-scales" class="flex flex-wrap gap-2 mb-3"></div>
+                <p class="text-xs text-neutral-400 mb-4">点指板上的任意音 → 听它的声音</p>
+                <div id="guitar-fretboard" class="overflow-x-auto"></div>
+            </div>
+
+            <div class="mt-7 pt-6 border-t border-dashed border-[var(--line-divider)]">
+                <div class="font-bold text-lg mb-1">调音器</div>
+                <p class="text-xs text-neutral-400 mb-4">对着麦克风弹单根弦，帮你听准不准</p>
+                <div class="flex items-center gap-4 flex-wrap mb-4">
+                    <button id="tuner-toggle"
+                        class="btn-regular h-10 px-5 rounded-lg font-bold active:scale-95 transition text-[var(--btn-content)]">开始调音</button>
+                    <span id="tuner-status" class="text-xs text-neutral-400">未启动（需要授权麦克风）</span>
+                </div>
+                <div id="tuner-display" class="hidden rounded-xl ring-1 ring-[var(--line-divider)] p-5 text-center">
+                    <div id="tuner-note" class="text-5xl font-bold leading-none mb-2">—</div>
+                    <div class="text-xs text-neutral-400 mb-4">检测到的音（标准调弦 E A D G B E）</div>
+                    <div class="relative w-full h-3 rounded-full bg-[var(--btn-regular-bg)] mb-2">
+                        <div id="tuner-line" class="absolute top-0 bottom-0 w-0.5 bg-[var(--primary)]" style="left:50%"></div>
+                    </div>
+                    <div id="tuner-cents" class="text-sm text-neutral-400">—</div>
+                </div>
+            </div>
+
+            <div class="mt-7 pt-6 border-t border-dashed border-[var(--line-divider)]">
+                <div class="font-bold text-lg mb-1">录音</div>
+                <p class="text-xs text-neutral-400 mb-4">录下你弹的，回听哪儿不对（需要麦克风）</p>
+                <div class="flex items-center gap-3 flex-wrap mb-4">
+                    <button id="rec-toggle"
+                        class="btn-regular h-10 px-5 rounded-lg font-bold active:scale-95 transition text-[var(--btn-content)]">
+                        <span id="rec-dot" class="inline-block w-2.5 h-2.5 rounded-full bg-[var(--primary)] mr-2 align-middle"></span><span id="rec-label">开始录音</span>
+                    </button>
+                    <span id="rec-status" class="text-xs text-neutral-400">未开始</span>
+                </div>
+                <div id="rec-list" class="flex flex-col gap-3"></div>
+            </div>
+
+            <div class="mt-7 pt-6 border-t border-dashed border-[var(--line-divider)]">
                 <div class="font-bold text-lg mb-1">节拍器</div>
                 <p class="text-xs text-neutral-400 mb-4">练琴用，速度可调</p>
-                <div class="flex items-center gap-4 flex-wrap">
+                <div class="flex items-center gap-4 flex-wrap mb-4">
                     <button id="metro-toggle"
                         class="btn-regular h-10 px-5 rounded-lg font-bold active:scale-95 transition text-[var(--btn-content)]">开始</button>
                     <div class="flex items-center gap-3 flex-1 min-w-[200px]">
                         <input id="metro-bpm" type="range" min="40" max="200" value="90"
                             class="flex-1 h-1.5 accent-[var(--primary)]" aria-label="速度">
-                        <span id="metro-value" class="text-sm font-bold w-16 text-right">90 BPM</span>
+                        <span id="metro-value" class="text-sm font-bold w-20 text-right">90 BPM</span>
                     </div>
                     <div id="metro-dot" class="w-3.5 h-3.5 rounded-full bg-[var(--btn-regular-bg)] transition"></div>
+                </div>
+                <div class="flex items-center gap-4 flex-wrap">
+                    <div id="metro-meters" class="flex gap-2"></div>
+                    <label class="flex items-center gap-2 text-sm text-neutral-500 cursor-pointer select-none">
+                        <input id="metro-accel" type="checkbox" class="accent-[var(--primary)]">
+                        渐快（每 8 拍 +4）
+                    </label>
+                    <span id="metro-beat" class="text-xs text-neutral-400 ml-auto">第 1 / 4 拍</span>
                 </div>
             </div>
         </div>
@@ -74,6 +130,29 @@ import MainGridLayout from "../layouts/MainGridLayout.astro";
         .chord-btn:hover { background: var(--btn-regular-bg-hover); }
         .chord-btn:active { transform: scale(0.94); background: var(--btn-regular-bg-active); }
         .metro-hit { background: var(--primary) !important; transform: scale(1.5); }
+        .tone-btn {
+            padding: 0.4rem 0.9rem; border-radius: 0.6rem; border: 0; cursor: pointer;
+            background: var(--btn-regular-bg); color: var(--btn-content);
+            font-size: 0.85rem; font-weight: 700;
+            transition: transform 0.1s ease, background 0.15s ease;
+        }
+        .tone-btn:hover { background: var(--btn-regular-bg-hover); }
+        .tone-btn:active { transform: scale(0.94); }
+        .tone-btn.active { background: var(--primary); color: white; }
+        .scale-btn {
+            padding: 0.35rem 0.8rem; border-radius: 0.6rem; border: 0; cursor: pointer;
+            background: var(--btn-regular-bg); color: var(--btn-content);
+            font-size: 0.82rem; font-weight: 700; transition: transform 0.1s ease;
+        }
+        .scale-btn:active { transform: scale(0.94); }
+        .scale-btn.active { background: var(--primary); color: white; }
+        .rec-item {
+            border-radius: 0.75rem; padding: 0.7rem 0.9rem;
+            background: var(--btn-regular-bg);
+        }
+        .rec-item audio { width: 100%; height: 32px; }
+        #rec-dot.recording { animation: rec-blink 1s ease-in-out infinite; }
+        @keyframes rec-blink { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
     </style>
 
     <script>
@@ -103,15 +182,73 @@ import MainGridLayout from "../layouts/MainGridLayout.astro";
         };
 
         let audioCtx = null;
+        let analyser = null;
+        let currentTone = "acoustic";
 
         function getCtx() {
             if (!audioCtx) {
                 const Ctor = window.AudioContext || window.webkitAudioContext;
                 if (!Ctor) return null;
                 audioCtx = new Ctor();
+                analyser = audioCtx.createAnalyser();
+                analyser.fftSize = 512;
+                analyser.smoothingTimeConstant = 0.75;
+                analyser.connect(audioCtx.destination);
             }
             if (audioCtx.state === "suspended") audioCtx.resume();
             return audioCtx;
+        }
+
+        // 输出口：有 analyser 就经过它（可视化需要），否则直连
+        function out(ac) { return analyser || ac.destination; }
+
+        // 失真曲线
+        function distortionCurve(amount) {
+            const n = 1024, curve = new Float32Array(n), k = amount;
+            for (let i = 0; i < n; i++) {
+                const x = (i * 2) / n - 1;
+                curve[i] = ((3 + k) * x * 20 * Math.PI / 180) / (Math.PI + k * Math.abs(x));
+            }
+            return curve;
+        }
+
+        // 按当前音色处理一段声音，返回输出节点
+        function applyTone(ac, input) {
+            let node = input;
+            if (currentTone === "nylon") {
+                const lp = ac.createBiquadFilter();
+                lp.type = "lowpass";
+                lp.frequency.value = 1800;
+                lp.Q.value = 0.7;
+                node.connect(lp); node = lp;
+                const lp2 = ac.createBiquadFilter();
+                lp2.type = "lowpass";
+                lp2.frequency.value = 3200;
+                node.connect(lp2); node = lp2;
+            } else if (currentTone === "clean") {
+                const hp = ac.createBiquadFilter();
+                hp.type = "highpass";
+                hp.frequency.value = 120;
+                node.connect(hp); node = hp;
+                const peak = ac.createBiquadFilter();
+                peak.type = "peaking";
+                peak.frequency.value = 2500;
+                peak.gain.value = 5;
+                node.connect(peak); node = peak;
+            } else if (currentTone === "distortion") {
+                const pre = ac.createGain();
+                pre.gain.value = 3.2;
+                node.connect(pre);
+                const shaper = ac.createWaveShaper();
+                shaper.curve = distortionCurve(60);
+                shaper.oversample = "4x";
+                pre.connect(shaper);
+                const lp = ac.createBiquadFilter();
+                lp.type = "lowpass";
+                lp.frequency.value = 3200;
+                shaper.connect(lp); node = lp;
+            }
+            return node;
         }
 
         // Karplus-Strong：噪声激励 + 延迟线平均滤波，物理建模拨弦
@@ -131,9 +268,11 @@ import MainGridLayout from "../layouts/MainGridLayout.astro";
             const src = ac.createBufferSource();
             src.buffer = buffer;
             const gain = ac.createGain();
-            gain.gain.value = 0.32 * (velocity === undefined ? 1 : velocity);
+            const v = velocity === undefined ? 1 : velocity;
+            gain.gain.value = (currentTone === "distortion" ? 0.16 : 0.32) * v;
             src.connect(gain);
-            gain.connect(ac.destination);
+            const tail = applyTone(ac, gain);
+            tail.connect(out(ac));
             src.start(ac.currentTime + (delay || 0));
         }
 
@@ -203,9 +342,232 @@ import MainGridLayout from "../layouts/MainGridLayout.astro";
                             setTimeout(function () { flash(n); }, i * 45);
                         }
                     });
+                    drawShape(name);
                 });
                 chordWrap.appendChild(b);
             });
+        }
+
+        // ---- 和弦指法图 ----
+        // 顺序：6弦 → 1弦；-1 表示不弹，0 表示空弦
+        const SHAPES = {
+            "C":     [-1, 3, 2, 0, 1, 0],
+            "G":     [3, 2, 0, 0, 0, 3],
+            "Am":    [-1, 0, 2, 2, 1, 0],
+            "Em":    [0, 2, 2, 0, 0, 0],
+            "Dm":    [-1, -1, 0, 2, 3, 1],
+            "F":     [1, 3, 3, 2, 1, 1],
+            "D":     [-1, -1, 0, 2, 3, 2],
+            "E":     [0, 2, 2, 1, 0, 0],
+            "A":     [-1, 0, 2, 2, 2, 0],
+            "G7":    [3, 2, 0, 0, 0, 1],
+            "Cadd9": [-1, 3, 2, 0, 3, 3],
+            "Am7":   [-1, 0, 2, 0, 1, 0],
+        };
+
+        const shapeBox = document.getElementById("guitar-shape");
+
+        function drawShape(name) {
+            if (!shapeBox) return;
+            const frets = SHAPES[name];
+            if (!frets) { shapeBox.innerHTML = ""; return; }
+
+            const played = frets.filter(function (v) { return v > 0; });
+            const minF = played.length ? Math.min.apply(null, played) : 1;
+            const maxF = played.length ? Math.max.apply(null, played) : 4;
+            let start = Math.max(1, minF);
+            if (maxF - start > 3) start = Math.max(1, maxF - 3);
+            const rows = 4;
+
+            const W = 150, H = 180;
+            const left = 28, top = 34, sw = (W - left - 16) / 5, sh = (H - top - 24) / rows;
+
+            let svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + " " + H + '">';
+            // 弦
+            for (let i = 0; i < 6; i++) {
+                const x = left + i * sw;
+                svg += '<line x1="' + x + '" y1="' + top + '" x2="' + x + '" y2="' + (top + rows * sh) + '" stroke="oklch(0.75 0.02 var(--hue,145))" stroke-width="' + (2.6 - i * 0.3) + '"/>';
+            }
+            // 品
+            for (let r = 0; r <= rows; r++) {
+                const y = top + r * sh;
+                svg += '<line x1="' + left + '" y1="' + y + '" x2="' + (left + 5 * sw) + '" y2="' + y + '" stroke="oklch(0.75 0.02 var(--hue,145))" stroke-width="' + (r === 0 ? 4 : 1.5) + '"/>';
+            }
+            // 起始品位数字
+            if (start > 1) {
+                svg += '<text x="' + (left - 14) + '" y="' + (top + sh * 0.7) + '" font-size="11" fill="oklch(0.6 0.03 var(--hue,145))">' + start + '</text>';
+            }
+            // 按弦点 / 空弦 / 禁弹
+            for (let i = 0; i < 6; i++) {
+                const x = left + i * sw;
+                const v = frets[i];
+                if (v === -1) {
+                    svg += '<text x="' + (x - 3) + '" y="' + (top - 8) + '" font-size="12" fill="oklch(0.6 0.03 var(--hue,145))">×</text>';
+                } else if (v === 0) {
+                    svg += '<circle cx="' + x + '" cy="' + (top - 14) + '" r="4.5" fill="none" stroke="oklch(0.6 0.1 var(--hue,145))" stroke-width="1.6"/>';
+                } else {
+                    const row = v - start;
+                    if (row >= 0 && row < rows) {
+                        const y = top + row * sh + sh / 2;
+                        svg += '<circle cx="' + x + '" cy="' + y + '" r="7" fill="oklch(0.70 0.14 var(--hue,145))"/>';
+                    }
+                }
+            }
+            svg += '<text x="' + (W / 2) + '" y="' + (H - 4) + '" font-size="13" font-weight="700" text-anchor="middle" fill="oklch(0.55 0.1 var(--hue,145))">' + name + '</text>';
+            svg += "</svg>";
+            shapeBox.innerHTML = svg;
+        }
+
+        // ---- 音阶图 ----
+        const OPEN_PC = [4, 9, 2, 7, 11, 4];   // E A D G B E
+        const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+        const SCALES = {
+            "C 大调":     [0, 2, 4, 5, 7, 9, 11],
+            "G 大调":     [7, 9, 11, 0, 2, 4, 6],
+            "A 小调五声": [9, 0, 2, 4, 7],
+            "C 大调五声": [0, 2, 4, 7, 9],
+            "A 布鲁斯":   [9, 0, 2, 3, 4, 7],
+            "E 小调五声": [4, 7, 9, 11, 2],
+        };
+        let currentScale = "C 大调";
+
+        const fb = document.getElementById("guitar-fretboard");
+        const scaleWrap = document.getElementById("guitar-scales");
+
+        function drawFretboard() {
+            if (!fb) return;
+            const steps = SCALES[currentScale];
+            const FRETS = 12;
+            const cw = 46, ch = 30;
+            const W = 40 + cw * FRETS;
+            const H = 24 + ch * 6;
+
+            let svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + " " + H + '">';
+            // 品丝
+            for (let f = 0; f <= FRETS; f++) {
+                const x = 40 + f * cw;
+                svg += '<line x1="' + x + '" y1="18" x2="' + x + '" y2="' + (18 + ch * 6) + '" stroke="oklch(0.86 0.01 var(--hue,145))" stroke-width="1"/>';
+            }
+            // 弦
+            for (let i = 0; i < 6; i++) {
+                const y = 18 + i * ch + ch / 2;
+                svg += '<line x1="40" y1="' + y + '" x2="' + (40 + cw * FRETS) + '" y2="' + y + '" stroke="oklch(0.80 0.02 var(--hue,145))" stroke-width="' + (2.4 - i * 0.25) + '"/>';
+            }
+            // 品位数字
+            for (let f = 1; f <= FRETS; f++) {
+                svg += '<text x="' + (40 + f * cw - cw / 2) + '" y="12" font-size="10" text-anchor="middle" fill="oklch(0.65 0.03 var(--hue,145))">' + f + "</text>";
+            }
+            // 音
+            for (let i = 0; i < 6; i++) {
+                const y = 18 + i * ch + ch / 2;
+                for (let f = 0; f <= FRETS; f++) {
+                    const pc = (OPEN_PC[i] + f) % 12;
+                    if (steps.indexOf(pc) === -1) continue;
+                    const x = 40 + f * cw + cw / 2;
+                    const isRoot = pc === steps[0];
+                    svg += '<circle cx="' + x + '" cy="' + y + '" r="8" fill="' + (isRoot ? "oklch(0.62 0.15 var(--hue,145))" : "oklch(0.78 0.09 var(--hue,145))") + '"/>';
+                    svg += '<text x="' + x + '" y="' + (y + 3.5) + '" font-size="9" text-anchor="middle" fill="' + (isRoot ? "white" : "oklch(0.30 0.03 var(--hue,145))") + '">' + NOTE_NAMES[pc] + "</text>";
+                }
+            }
+            svg += "</svg>";
+            fb.innerHTML = svg;
+
+            // 点指板上的音 → 发声
+            Array.prototype.forEach.call(fb.querySelectorAll(".fb-note"), function (g) {
+                g.addEventListener("click", function () {
+                    const fr = parseFloat(g.getAttribute("data-freq"));
+                    if (fr) pluck(fr, 1, 0);
+                });
+            });
+        }
+
+        if (scaleWrap) {
+            Object.keys(SCALES).forEach(function (name) {
+                const b = document.createElement("button");
+                b.type = "button";
+                b.className = "scale-btn" + (name === currentScale ? " active" : "");
+                b.textContent = name;
+                b.addEventListener("click", function () {
+                    currentScale = name;
+                    Array.prototype.forEach.call(scaleWrap.children, function (c) { c.classList.remove("active"); });
+                    b.classList.add("active");
+                    drawFretboard();
+                });
+                scaleWrap.appendChild(b);
+            });
+        }
+
+        // ---- 音色 ----
+        const TONES = [
+            { id: "acoustic",   label: "钢弦木吉他" },
+            { id: "nylon",      label: "尼龙弦" },
+            { id: "clean",      label: "电吉他清音" },
+            { id: "distortion", label: "失真" },
+        ];
+        const toneWrap = document.getElementById("guitar-tones");
+        if (toneWrap) {
+            TONES.forEach(function (t) {
+                const b = document.createElement("button");
+                b.type = "button";
+                b.className = "tone-btn" + (t.id === currentTone ? " active" : "");
+                b.textContent = t.label;
+                b.addEventListener("click", function () {
+                    currentTone = t.id;
+                    Array.prototype.forEach.call(toneWrap.children, function (c) { c.classList.remove("active"); });
+                    b.classList.add("active");
+                    const ac = getCtx();
+                    if (ac) pluck(TUNING[4].freq, 0.9, 0);  // 试听一下
+                });
+                toneWrap.appendChild(b);
+            });
+        }
+
+        // ---- 频谱可视化 ----
+        const canvas = document.getElementById("guitar-vis");
+        if (canvas) {
+            const cctx = canvas.getContext("2d");
+            function resize() {
+                canvas.width = canvas.clientWidth * (window.devicePixelRatio || 1);
+            }
+            resize();
+            window.addEventListener("resize", resize);
+
+            function draw() {
+                requestAnimationFrame(draw);
+                if (!canvas.width) return;
+                const w = canvas.width;
+                const h = canvas.height;
+                cctx.clearRect(0, 0, w, h);
+
+                const bars = 48;
+                const gap = 2;
+                const bw = (w - gap * (bars - 1)) / bars;
+                let data = null;
+                if (analyser) {
+                    data = new Uint8Array(analyser.frequencyBinCount);
+                    analyser.getByteFrequencyData(data);
+                }
+                // 主题色
+                const style = getComputedStyle(document.documentElement);
+                const hue = style.getPropertyValue("--hue").trim() || "145";
+                cctx.fillStyle = "oklch(0.70 0.14 " + hue + ")";
+
+                for (let i = 0; i < bars; i++) {
+                    let v = 0;
+                    if (data) {
+                        const idx = Math.floor(Math.pow(i / bars, 1.6) * (data.length * 0.55));
+                        v = data[idx] / 255;
+                    }
+                    const bh = Math.max(2, v * h * 0.9);
+                    const x = i * (bw + gap);
+                    cctx.globalAlpha = 0.25 + v * 0.75;
+                    cctx.beginPath();
+                    cctx.roundRect(x, h - bh, bw, bh, 2);
+                    cctx.fill();
+                }
+                cctx.globalAlpha = 1;
+            }
+            draw();
         }
 
         // ---- 节拍器 ----
@@ -213,30 +575,65 @@ import MainGridLayout from "../layouts/MainGridLayout.astro";
         const bpmInput = document.getElementById("metro-bpm");
         const bpmValue = document.getElementById("metro-value");
         const metroDot = document.getElementById("metro-dot");
+        const METERS = { "4/4": 4, "3/4": 3, "6/8": 6, "2/4": 2 };
+        let currentMeter = "4/4";
+        let beatIndex = 0;
+        let accelCounter = 0;
         let metroTimer = null;
         let metroOn = false;
+
+        const meterWrap = document.getElementById("metro-meters");
+        const accelBox = document.getElementById("metro-accel");
+        const beatLabel = document.getElementById("metro-beat");
 
         function tick() {
             const ac = getCtx();
             if (!ac) return;
+            const beats = METERS[currentMeter];
+            const isDown = beatIndex % beats === 0;
+
             const osc = ac.createOscillator();
             const g = ac.createGain();
-            osc.frequency.value = 1200;
-            g.gain.setValueAtTime(0.28, ac.currentTime);
+            osc.frequency.value = isDown ? 1600 : 1050;
+            g.gain.setValueAtTime(isDown ? 0.34 : 0.18, ac.currentTime);
             g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.06);
             osc.connect(g);
-            g.connect(ac.destination);
+            g.connect(out(ac));
             osc.start();
             osc.stop(ac.currentTime + 0.07);
-            metroDot?.classList.add("metro-hit");
-            setTimeout(function () { metroDot?.classList.remove("metro-hit"); }, 100);
+
+            if (isDown) {
+                metroDot?.classList.add("metro-hit");
+                setTimeout(function () { metroDot?.classList.remove("metro-hit"); }, 100);
+            }
+            if (beatLabel) beatLabel.textContent = "第 " + ((beatIndex % beats) + 1) + " / " + beats + " 拍";
+
+            beatIndex++;
+
+            // 渐快：每 8 拍 +4 BPM
+            if (accelBox && accelBox.checked && bpmInput) {
+                accelCounter++;
+                if (accelCounter >= 8 * (beats / 4)) {
+                    accelCounter = 0;
+                    const next = Math.min(200, Number(bpmInput.value) + 4);
+                    bpmInput.value = String(next);
+                    if (bpmValue) bpmValue.textContent = next + " BPM";
+                    restartTimer();
+                }
+            }
+        }
+
+        function restartTimer() {
+            if (metroTimer) clearInterval(metroTimer);
+            const bpm = Number(bpmInput?.value) || 90;
+            metroTimer = setInterval(tick, 60000 / bpm);
         }
 
         function startMetro() {
-            const bpm = Number(bpmInput.value) || 90;
-            const interval = 60000 / bpm;
+            beatIndex = 0;
+            accelCounter = 0;
             tick();
-            metroTimer = setInterval(tick, interval);
+            restartTimer();
             metroOn = true;
             if (metroBtn) metroBtn.textContent = "停止";
         }
@@ -246,6 +643,23 @@ import MainGridLayout from "../layouts/MainGridLayout.astro";
             metroTimer = null;
             metroOn = false;
             if (metroBtn) metroBtn.textContent = "开始";
+            if (beatLabel) beatLabel.textContent = "已停止";
+        }
+
+        if (meterWrap) {
+            Object.keys(METERS).forEach(function (m) {
+                const b = document.createElement("button");
+                b.type = "button";
+                b.className = "scale-btn" + (m === currentMeter ? " active" : "");
+                b.textContent = m;
+                b.addEventListener("click", function () {
+                    currentMeter = m;
+                    beatIndex = 0;
+                    Array.prototype.forEach.call(meterWrap.children, function (c) { c.classList.remove("active"); });
+                    b.classList.add("active");
+                });
+                meterWrap.appendChild(b);
+            });
         }
 
         metroBtn?.addEventListener("click", function () {
@@ -253,7 +667,201 @@ import MainGridLayout from "../layouts/MainGridLayout.astro";
         });
         bpmInput?.addEventListener("input", function () {
             if (bpmValue) bpmValue.textContent = bpmInput.value + " BPM";
-            if (metroOn) { stopMetro(); startMetro(); }
+            if (metroOn) restartTimer();
         });
+
+        // ---- 调音器 ----
+        const tunerBtn = document.getElementById("tuner-toggle");
+        const tunerStatus = document.getElementById("tuner-status");
+        const tunerDisplay = document.getElementById("tuner-display");
+        const tunerNote = document.getElementById("tuner-note");
+        const tunerCents = document.getElementById("tuner-cents");
+        const tunerLine = document.getElementById("tuner-line");
+
+        let tunerStream = null;
+        let tunerAnalyser = null;
+        let tunerRAF = null;
+        let tunerOn = false;
+
+        // 自相关法测基频
+        function autoCorrelate(buf, sampleRate) {
+            let SIZE = buf.length;
+            let rms = 0;
+            for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
+            rms = Math.sqrt(rms / SIZE);
+            if (rms < 0.008) return -1;
+
+            let r1 = 0, r2 = SIZE - 1, thres = 0.2;
+            for (let i = 0; i < SIZE / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
+            for (let i = 1; i < SIZE / 2; i++) if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
+
+            const sliced = buf.slice(r1, r2);
+            const N = sliced.length;
+            if (N < 64) return -1;
+
+            const c = new Float32Array(N).fill(0);
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < N - i; j++) c[i] += sliced[j] * sliced[j + i];
+            }
+            let d = 0;
+            while (d < N - 1 && c[d] > c[d + 1]) d++;
+            let maxval = -1, maxpos = -1;
+            for (let i = d; i < N; i++) {
+                if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
+            }
+            let T0 = maxpos;
+            if (T0 <= 0 || T0 >= N - 1) return -1;
+            const x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
+            const a = (x1 + x3 - 2 * x2) / 2;
+            const b = (x3 - x1) / 2;
+            if (a) T0 = T0 - b / (2 * a);
+            if (T0 <= 0) return -1;
+            return sampleRate / T0;
+        }
+
+        function tunerLoop() {
+            if (!tunerOn || !tunerAnalyser) return;
+            const buf = new Float32Array(tunerAnalyser.fftSize);
+            tunerAnalyser.getFloatTimeDomainData(buf);
+            const freq = autoCorrelate(buf, audioCtx.sampleRate);
+
+            if (freq && freq > 60 && freq < 1200) {
+                const noteNum = 12 * Math.log2(freq / 440) + 69;
+                const nearest = Math.round(noteNum);
+                const pc = ((nearest % 12) + 12) % 12;
+                const octave = Math.floor(nearest / 12) - 1;
+                const cents = Math.round((noteNum - nearest) * 100);
+
+                if (tunerNote) tunerNote.textContent = NOTE_NAMES[pc] + octave;
+                if (tunerCents) {
+                    const abs = Math.abs(cents);
+                    tunerCents.textContent = (cents > 0 ? "+" : "") + cents + " 音分 · " +
+                        (abs <= 5 ? "准了" : (cents < 0 ? "偏低，紧一点" : "偏高，松一点"));
+                }
+                if (tunerLine) {
+                    const pos = Math.max(2, Math.min(98, 50 + cents));
+                    tunerLine.style.left = pos + "%";
+                }
+            }
+            tunerRAF = requestAnimationFrame(tunerLoop);
+        }
+
+        async function startTuner() {
+            try {
+                const ac = getCtx();
+                if (!ac) throw new Error("no AudioContext");
+                tunerStream = await navigator.mediaDevices.getUserMedia({
+                    audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+                });
+                const src = ac.createMediaStreamSource(tunerStream);
+                tunerAnalyser = ac.createAnalyser();
+                tunerAnalyser.fftSize = 2048;
+                src.connect(tunerAnalyser);
+                tunerOn = true;
+                if (tunerDisplay) tunerDisplay.classList.remove("hidden");
+                if (tunerStatus) tunerStatus.textContent = "正在听…弹一根弦试试";
+                if (tunerBtn) tunerBtn.textContent = "停止调音";
+                tunerLoop();
+            } catch (e) {
+                if (tunerStatus) tunerStatus.textContent = "拿不到麦克风权限：" + e.message;
+            }
+        }
+
+        function stopTuner() {
+            tunerOn = false;
+            if (tunerRAF) cancelAnimationFrame(tunerRAF);
+            tunerRAF = null;
+            if (tunerStream) {
+                tunerStream.getTracks().forEach(function (t) { t.stop(); });
+                tunerStream = null;
+            }
+            tunerAnalyser = null;
+            if (tunerDisplay) tunerDisplay.classList.add("hidden");
+            if (tunerStatus) tunerStatus.textContent = "未启动（需要授权麦克风）";
+            if (tunerBtn) tunerBtn.textContent = "开始调音";
+        }
+
+        tunerBtn?.addEventListener("click", function () {
+            if (tunerOn) stopTuner(); else startTuner();
+        });
+
+        // ---- 录音回放 ----
+        const recBtn = document.getElementById("rec-toggle");
+        const recLabel = document.getElementById("rec-label");
+        const recDot = document.getElementById("rec-dot");
+        const recStatus = document.getElementById("rec-status");
+        const recList = document.getElementById("rec-list");
+
+        let recStream = null;
+        let recorder = null;
+        let recChunks = [];
+        let recOn = false;
+        let recStart = 0;
+
+        function addRecording(blob, seconds) {
+            if (!recList) return;
+            const url = URL.createObjectURL(blob);
+            const item = document.createElement("div");
+            item.className = "rec-item";
+
+            const top = document.createElement("div");
+            top.className = "flex items-center justify-between mb-2 text-xs text-neutral-400";
+            top.innerHTML = '<span>录音 ' + recList.children.length + ' · ' + seconds.toFixed(1) + ' 秒</span>';
+
+            const dl = document.createElement("a");
+            dl.href = url;
+            dl.download = "guitar-recording-" + (recList.children.length + 1) + ".webm";
+            dl.textContent = "下载";
+            dl.className = "underline";
+            top.appendChild(dl);
+
+            const audio = document.createElement("audio");
+            audio.controls = true;
+            audio.src = url;
+
+            item.appendChild(top);
+            item.appendChild(audio);
+            recList.insertBefore(item, recList.firstChild);
+        }
+
+        async function startRec() {
+            try {
+                recStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const mime = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "";
+                recorder = mime ? new MediaRecorder(recStream, { mimeType: mime }) : new MediaRecorder(recStream);
+                recChunks = [];
+                recorder.ondataavailable = function (e) { if (e.data && e.data.size) recChunks.push(e.data); };
+                recorder.onstop = function () {
+                    const blob = new Blob(recChunks, { type: recorder.mimeType || "audio/webm" });
+                    const secs = (Date.now() - recStart) / 1000;
+                    if (blob.size > 0) addRecording(blob, secs);
+                    if (recStream) { recStream.getTracks().forEach(function (t) { t.stop(); }); recStream = null; }
+                };
+                recorder.start();
+                recStart = Date.now();
+                recOn = true;
+                if (recLabel) recLabel.textContent = "停止录音";
+                if (recDot) recDot.classList.add("recording");
+                if (recStatus) recStatus.textContent = "录音中…";
+            } catch (e) {
+                if (recStatus) recStatus.textContent = "拿不到麦克风：" + e.message;
+            }
+        }
+
+        function stopRec() {
+            if (recorder && recorder.state !== "inactive") recorder.stop();
+            recOn = false;
+            if (recLabel) recLabel.textContent = "开始录音";
+            if (recDot) recDot.classList.remove("recording");
+            if (recStatus) recStatus.textContent = "已保存到下面（本次会话内有效）";
+        }
+
+        recBtn?.addEventListener("click", function () {
+            if (recOn) stopRec(); else startRec();
+        });
+
+        // 首屏默认
+        drawShape("C");
+        drawFretboard();
     </script>
 </MainGridLayout>
