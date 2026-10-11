@@ -1,5 +1,5 @@
 ---
-// 侧边栏迷你播放器：常驻侧边栏，看文章时也能控制
+// 侧边栏迷你播放器：常驻侧边栏，支持多曲目
 ---
 
 <div id="mini-player" class="card-base p-3">
@@ -9,9 +9,11 @@
             <span id="mp-icon" class="text-[0.95rem] text-[var(--btn-content)] leading-none">▶</span>
         </button>
         <div class="min-w-0 flex-1">
-            <div id="mp-title" class="text-sm font-bold truncate leading-tight">Finally Chiptune</div>
-            <div class="text-[0.68rem] text-neutral-400 truncate leading-tight">c20g · CC0 公共领域</div>
+            <div id="mp-title" class="text-sm font-bold truncate leading-tight">—</div>
+            <div id="mp-artist" class="text-[0.68rem] text-neutral-400 truncate leading-tight">—</div>
         </div>
+        <button id="mp-next" aria-label="下一首"
+            class="btn-regular w-8 h-8 rounded-full shrink-0 active:scale-90 transition text-[var(--btn-content)] text-xs">⏭</button>
     </div>
 
     <div id="mp-bar" class="w-full h-1.5 rounded-full bg-[var(--btn-regular-bg)] cursor-pointer relative mb-1.5">
@@ -28,17 +30,32 @@
     </div>
 </div>
 
-<audio id="mp-audio" src="/audio/finally-chiptune.mp3" preload="metadata" loop></audio>
+<audio id="mp-audio" preload="metadata"></audio>
 
 <script>
+    /* ============================================================
+       曲目列表 —— 加歌就在这里加一行
+       1) 把 mp3/ogg 文件放进  blog/public/audio/
+       2) 在下面数组里加一行，src 写 /audio/你的文件名.mp3
+       ============================================================ */
+    const TRACKS = [
+        { title: "Finally Chiptune", artist: "c20g · CC0 公共领域", src: "/audio/finally-chiptune.mp3" },
+        // { title: "歌名", artist: "作者 · 许可", src: "/audio/文件名.mp3" },
+    ];
+
     const audio = document.getElementById("mp-audio");
     const toggle = document.getElementById("mp-toggle");
+    const next = document.getElementById("mp-next");
     const icon = document.getElementById("mp-icon");
     const bar = document.getElementById("mp-bar");
     const fill = document.getElementById("mp-fill");
     const now = document.getElementById("mp-now");
     const dur = document.getElementById("mp-dur");
     const hint = document.getElementById("mp-hint");
+    const titleEl = document.getElementById("mp-title");
+    const artistEl = document.getElementById("mp-artist");
+
+    let index = 0;
 
     function fmt(sec) {
         if (!isFinite(sec)) return "0:00";
@@ -47,8 +64,25 @@
         return m + ":" + (s < 10 ? "0" : "") + s;
     }
 
-    if (audio) {
+    function load(i, autoplay) {
+        if (!TRACKS.length) return;
+        index = (i + TRACKS.length) % TRACKS.length;
+        const t = TRACKS[index];
+        audio.src = t.src;
+        if (titleEl) titleEl.textContent = t.title;
+        if (artistEl) artistEl.textContent = t.artist;
+        if (dur) dur.textContent = "0:00";
+        if (fill) fill.style.width = "0%";
+        if (autoplay) {
+            const p = audio.play();
+            if (p && p.catch) p.catch(function () { hint?.classList.remove("hidden"); });
+        }
+    }
+
+    if (audio && TRACKS.length) {
         audio.volume = 0.6;
+        load(0, false);
+
         audio.addEventListener("loadedmetadata", function () {
             if (dur) dur.textContent = fmt(audio.duration);
         });
@@ -61,20 +95,20 @@
             if (icon) icon.textContent = "❚❚";
             hint?.classList.add("hidden");
         });
-        audio.addEventListener("pause", function () {
-            if (icon) icon.textContent = "▶";
-        });
+        audio.addEventListener("pause", function () { if (icon) icon.textContent = "▶"; });
+        audio.addEventListener("ended", function () { load(index + 1, true); });
 
         toggle?.addEventListener("click", function () {
             if (audio.paused) audio.play(); else audio.pause();
         });
+        next?.addEventListener("click", function () { load(index + 1, true); });
         bar?.addEventListener("click", function (e) {
             const rect = bar.getBoundingClientRect();
             const ratio = (e.clientX - rect.left) / rect.width;
             if (audio.duration) audio.currentTime = ratio * audio.duration;
         });
 
-        // 浏览器禁止无交互自动播放：尝试一次，失败就给出提示
+        // 尝试自动播放（浏览器通常会拒绝，失败则提示）
         const attempt = audio.play();
         if (attempt && attempt.catch) {
             attempt.catch(function () { hint?.classList.remove("hidden"); });
