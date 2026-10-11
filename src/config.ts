@@ -58,11 +58,6 @@ export const navBarConfig: NavBarConfig = {
 			url: "/guitar/",
 			external: false,
 		},
-		{
-			name: "音乐",
-			url: "/music/",
-			external: false,
-		},
 		LinkPreset.About,
 		{
 			name: "GitHub",
