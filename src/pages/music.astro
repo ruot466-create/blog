@@ -1,0 +1,92 @@
+---
+import MainGridLayout from "../layouts/MainGridLayout.astro";
+---
+
+<MainGridLayout title="音乐" description="博客里放着的音乐">
+    <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
+        <div class="card-base z-10 px-6 md:px-9 py-7 relative w-full">
+            <h1 class="text-3xl font-bold mb-2">音乐</h1>
+            <p class="text-sm text-neutral-400 mb-7">
+                这里放的都是<strong>公共领域（CC0）</strong>的音乐，可以合法公开播放。
+            </p>
+
+            <div id="music-player" class="rounded-2xl ring-1 ring-[var(--line-divider)] p-5">
+                <div class="flex items-center gap-4 mb-5">
+                    <button id="mp-toggle" aria-label="播放或暂停"
+                        class="btn-regular w-14 h-14 rounded-full shrink-0 active:scale-90 transition">
+                        <span id="mp-icon" class="text-[1.4rem] text-[var(--btn-content)]">▶</span>
+                    </button>
+                    <div class="min-w-0">
+                        <div id="mp-title" class="font-bold text-lg truncate">Finally Chiptune</div>
+                        <div class="text-xs text-neutral-400">c20g · CC0 1.0（公共领域）</div>
+                    </div>
+                </div>
+
+                <div id="mp-bar" class="w-full h-2 rounded-full bg-[var(--btn-regular-bg)] cursor-pointer relative mb-2">
+                    <div id="mp-fill" class="h-full rounded-full bg-[var(--primary)] transition-[width] duration-150" style="width:0%"></div>
+                </div>
+                <div class="flex justify-between text-xs text-neutral-400 mb-4">
+                    <span id="mp-now">0:00</span>
+                    <span id="mp-dur">0:00</span>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <span class="text-xs text-neutral-400">音量</span>
+                    <input id="mp-vol" type="range" min="0" max="100" value="70"
+                        class="flex-1 h-1.5 accent-[var(--primary)]" aria-label="音量">
+                </div>
+            </div>
+
+            <p class="text-xs text-neutral-400 mt-6">
+                来源：<a href="https://archive.org/details/c20g_-_finally_chiptune_stereo" target="_blank" rel="noopener" class="link">Internet Archive</a>
+                · 许可：CC0 1.0 Universal（可自由使用、修改、商用，无需署名）
+            </p>
+        </div>
+    </div>
+
+    <audio id="mp-audio" src="/audio/finally-chiptune.mp3" preload="metadata" loop></audio>
+
+    <script>
+        const audio = document.getElementById("mp-audio");
+        const toggle = document.getElementById("mp-toggle");
+        const icon = document.getElementById("mp-icon");
+        const bar = document.getElementById("mp-bar");
+        const fill = document.getElementById("mp-fill");
+        const now = document.getElementById("mp-now");
+        const dur = document.getElementById("mp-dur");
+        const vol = document.getElementById("mp-vol");
+
+        function fmt(sec) {
+            if (!isFinite(sec)) return "0:00";
+            const m = Math.floor(sec / 60);
+            const s = Math.floor(sec % 60);
+            return m + ":" + (s < 10 ? "0" : "") + s;
+        }
+
+        if (audio) {
+            audio.volume = 0.7;
+            audio.addEventListener("loadedmetadata", function () {
+                if (dur) dur.textContent = fmt(audio.duration);
+            });
+            audio.addEventListener("timeupdate", function () {
+                const p = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
+                if (fill) fill.style.width = p + "%";
+                if (now) now.textContent = fmt(audio.currentTime);
+            });
+            audio.addEventListener("play", function () { if (icon) icon.textContent = "❚❚"; });
+            audio.addEventListener("pause", function () { if (icon) icon.textContent = "▶"; });
+
+            toggle?.addEventListener("click", function () {
+                if (audio.paused) audio.play(); else audio.pause();
+            });
+            bar?.addEventListener("click", function (e) {
+                const rect = bar.getBoundingClientRect();
+                const ratio = (e.clientX - rect.left) / rect.width;
+                if (audio.duration) audio.currentTime = ratio * audio.duration;
+            });
+            vol?.addEventListener("input", function () {
+                audio.volume = Number(vol.value) / 100;
+            });
+        }
+    </script>
+</MainGridLayout>
