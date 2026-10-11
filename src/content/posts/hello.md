@@ -2,8 +2,8 @@
 title: 我想试一试开一个博客
 published: 2026-10-11
 description: 第一篇文章，说明我为什么开始写东西。
-tags: [随笔]
-category: 随笔
+tags: [成长, 博客]
+category: 成长
 draft: false
 image: '/images/hello-cover.jpg'
 ---

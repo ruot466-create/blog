@@ -118,6 +118,15 @@ const bannerOffset =
 				src: url('/fonts/Zpix.woff2') format('woff2');
 				font-display: swap;
 			}
+			/* 卡片悬停微上浮（纯 transform，不影响布局） */
+			.card-base {
+				transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+				            box-shadow 0.28s ease;
+			}
+			a:hover > .card-base {
+				transform: translateY(-3px);
+				box-shadow: 0 10px 26px -14px oklch(0.62 0.12 var(--hue, 145) / 0.45);
+			}
 			html[data-font="pixel"] body { font-family: Zpix, ui-monospace, monospace; }
 			html[data-font="system"] body { font-family: Roboto, system-ui, -apple-system, "Microsoft YaHei", "PingFang SC", sans-serif; }
 		</style>
