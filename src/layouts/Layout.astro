@@ -110,6 +110,17 @@ const bannerOffset =
 		))}
 
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/style.css" />
+		<style is:global>
+			/* 像素字体 Zpix（最像素），自托管于 public/fonts/。
+			   只在用户主动选择像素字体时才会被请求（默认不加载）。 */
+			@font-face {
+				font-family: 'Zpix';
+				src: url('/fonts/Zpix.ttf') format('truetype');
+				font-display: swap;
+			}
+			html[data-font="pixel"] body { font-family: Zpix, ui-monospace, monospace; }
+			html[data-font="system"] body { font-family: Roboto, system-ui, -apple-system, "Microsoft YaHei", "PingFang SC", sans-serif; }
+		</style>
 
 		<!-- Set the theme before the page is rendered to avoid a flash -->
 		<script is:inline define:vars={{DEFAULT_THEME, LIGHT_MODE, DARK_MODE, AUTO_MODE, BANNER_HEIGHT_EXTEND, PAGE_WIDTH, configHue}}>
@@ -130,10 +141,22 @@ const bannerOffset =
 					}
 			}
 
-			// 站点配色以 config.ts 的 themeColor.hue 为准。
-			// 不读取 localStorage，避免浏览器里的旧值长期覆盖配置（改配置后刷新即生效）。
-			const hue = configHue;
+			// 配色：config.ts 是默认值；用户手动调过色且站点配置没变过，就沿用他的选择。
+			var hue = configHue;
+			try {
+				var storedHue = localStorage.getItem('hue');
+				var hueStamp = localStorage.getItem('hue-config');
+				if (storedHue && hueStamp === String(configHue)) hue = Number(storedHue);
+			} catch (e) {}
 			document.documentElement.style.setProperty('--hue', hue);
+
+			// 字体：lxgw（默认）| pixel | system
+			var font = 'lxgw';
+			try {
+				var storedFont = localStorage.getItem('font');
+				if (storedFont === 'pixel' || storedFont === 'system' || storedFont === 'lxgw') font = storedFont;
+			} catch (e) {}
+			document.documentElement.setAttribute('data-font', font);
 
 			// calculate the --banner-height-extend, which needs to be a multiple of 4 to avoid blurry text
 			let offset = Math.floor(window.innerHeight * (BANNER_HEIGHT_EXTEND / 100));

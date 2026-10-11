@@ -2,10 +2,24 @@
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import Icon from "@iconify/svelte";
-import { getDefaultHue, getHue, setHue } from "@utils/setting-utils";
+import {
+	getDefaultHue,
+	getFont,
+	getHue,
+	setFont,
+	setHue,
+	type FontChoice,
+} from "@utils/setting-utils";
 
 let hue = getHue();
+let font: FontChoice = getFont();
 const defaultHue = getDefaultHue();
+
+const FONTS: { id: FontChoice; label: string }[] = [
+	{ id: "lxgw", label: "楷体" },
+	{ id: "pixel", label: "像素" },
+	{ id: "system", label: "系统" },
+];
 
 function resetHue() {
 	hue = getDefaultHue();
@@ -13,6 +27,10 @@ function resetHue() {
 
 $: if (hue || hue === 0) {
 	setHue(hue);
+}
+
+$: if (font) {
+	setFont(font);
 }
 </script>
 
@@ -40,6 +58,25 @@ $: if (hue || hue === 0) {
     <div class="w-full h-6 px-1 bg-[oklch(0.80_0.10_0)] dark:bg-[oklch(0.70_0.10_0)] rounded select-none">
         <input aria-label={i18n(I18nKey.themeColor)} type="range" min="0" max="360" bind:value={hue}
                class="slider" id="colorSlider" step="5" style="width: 100%">
+    </div>
+
+    <div class="mt-5">
+        <div class="flex gap-2 font-bold text-lg text-neutral-900 dark:text-neutral-100 transition relative ml-3
+            before:w-1 before:h-4 before:rounded-md before:bg-[var(--primary)]
+            before:absolute before:-left-3 before:top-[0.33rem]"
+        >
+            字体
+        </div>
+        <div class="flex gap-2 mt-3">
+            {#each FONTS as item}
+                <button
+                    class="btn-regular flex-1 h-8 rounded-md text-sm font-bold active:scale-95 transition
+                           {font === item.id ? 'ring-2 ring-[var(--primary)]' : 'opacity-70'}"
+                    on:click={() => (font = item.id)}
+                    aria-label={"使用" + item.label}
+                >{item.label}</button>
+            {/each}
+        </div>
     </div>
 </div>
 
