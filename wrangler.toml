@@ -1,0 +1,7 @@
+# Cloudflare Worker 静态资源部署配置
+# 用法：pnpm build && npx wrangler deploy
+name = "ruoruo"
+compatibility_date = "2026-10-11"
+
+[assets]
+directory = "./dist"
