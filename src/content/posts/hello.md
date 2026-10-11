@@ -5,6 +5,7 @@ description: 第一篇文章，说明我为什么开始写东西。
 tags: [随笔]
 category: 随笔
 draft: false
+image: "/images/hello-cover.jpg"
 ---
 
 我现在再学校html css JavaScript
