@@ -1,32 +1,30 @@
 @echo off
 cd /d "%~dp0"
-title Update Blog
+title Publish Blog
 echo ================================
-echo    Build + Deploy + Sync
+echo    Publish Blog
 echo ================================
 echo.
-echo [1/3] Building (about 1 min)...
-call pnpm build
-if errorlevel 1 goto error
-echo.
-echo [2/3] Deploying to Cloudflare...
-call npx --yes wrangler@latest deploy
-if errorlevel 1 goto error
-echo.
-echo [3/3] Syncing source to GitHub...
+echo [1/2] Saving changes...
 git add -A
 git commit -m "update: site content" >nul 2>&1
+echo [2/2] Pushing to GitHub...
 git push
 if errorlevel 1 goto error
 echo.
 echo ================================
-echo    DONE: https://ruoruo.ruot466.workers.dev
+echo    Pushed!
+echo.
+echo    GitHub is building now (~40s).
+echo    Refresh in a minute:
+echo    https://ruoruo.ruot466.workers.dev
 echo ================================
 if not "%1"=="nopause" pause
 exit /b 0
 :error
 echo.
-echo *** FAILED ***
-echo Send the error above to the AI.
+echo *** PUSH FAILED ***
+echo Check your network first. If it keeps failing,
+echo run deploy-local.cmd instead.
 if not "%1"=="nopause" pause
 exit /b 1
