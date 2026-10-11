@@ -2,15 +2,21 @@
 cd /d "%~dp0"
 title Update Blog
 echo ================================
-echo    Build and deploy blog
+echo    Build + Deploy + Sync
 echo ================================
 echo.
-echo [1/2] Building (about 1 min)...
+echo [1/3] Building (about 1 min)...
 call pnpm build
 if errorlevel 1 goto error
 echo.
-echo [2/2] Deploying to Cloudflare...
+echo [2/3] Deploying to Cloudflare...
 call npx --yes wrangler@latest deploy
+if errorlevel 1 goto error
+echo.
+echo [3/3] Syncing source to GitHub...
+git add -A
+git commit -m "update: site content" >nul 2>&1
+git push
 if errorlevel 1 goto error
 echo.
 echo ================================
