@@ -1,0 +1,144 @@
+---
+import MainGridLayout from "../layouts/MainGridLayout.astro";
+---
+
+<MainGridLayout title="吉他" description="在浏览器里拨响一把吉他">
+    <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
+        <div class="card-base z-10 px-6 md:px-9 py-7 relative w-full">
+            <h1 class="text-3xl font-bold mb-2">拨一下试试</h1>
+            <p class="text-sm text-neutral-400 mb-7">
+                点琴弦发声，或者<strong>按住鼠标从左往右划过去</strong>（扫弦）。标准调弦 E A D G B E。
+            </p>
+
+            <div id="guitar-strings" class="flex flex-col gap-5 py-4 select-none touch-none"></div>
+
+            <p id="guitar-hint" class="text-xs text-neutral-400 mt-7">
+                提示：这是用 Karplus-Strong 算法实时合成的声音，没有任何音频文件。
+            </p>
+        </div>
+    </div>
+
+    <style is:global>
+        .guitar-string {
+            display: flex; align-items: center; gap: 0.9rem;
+            width: 100%; background: none; border: 0; padding: 0.35rem 0;
+            cursor: pointer; -webkit-tap-highlight-color: transparent;
+        }
+        .guitar-note {
+            width: 2.2rem; flex: none; font-size: 0.72rem; letter-spacing: 0.05em;
+            color: oklch(0.6 0.05 var(--hue, 145)); text-align: right;
+            font-family: ui-monospace, monospace;
+        }
+        .guitar-line {
+            flex: 1; border-radius: 999px;
+            background: linear-gradient(90deg,
+                oklch(0.72 0.06 var(--hue, 145)),
+                oklch(0.55 0.04 var(--hue, 145)) 50%,
+                oklch(0.72 0.06 var(--hue, 145)));
+            transition: filter 0.15s ease, transform 0.05s ease;
+        }
+        .guitar-string:hover .guitar-line { filter: brightness(1.35); }
+        .guitar-string.sounding .guitar-line {
+            animation: guitar-vibrate 0.4s ease-out;
+            box-shadow: 0 0 14px oklch(0.7 0.15 var(--hue, 145));
+        }
+        @keyframes guitar-vibrate {
+            0%   { transform: translateY(-2px) scaleY(2.2); filter: brightness(1.9); }
+            35%  { transform: translateY(1.5px) scaleY(1.4); }
+            70%  { transform: translateY(-0.8px) scaleY(1.1); }
+            100% { transform: translateY(0) scaleY(1); }
+        }
+    </style>
+
+    <script>
+        const TUNING = [
+            { note: "E2", freq: 82.41,  gauge: 5 },
+            { note: "A2", freq: 110.0,  gauge: 4.4 },
+            { note: "D3", freq: 146.83, gauge: 3.8 },
+            { note: "G3", freq: 196.0,  gauge: 3.2 },
+            { note: "B3", freq: 246.94, gauge: 2.6 },
+            { note: "E4", freq: 329.63, gauge: 2.0 },
+        ];
+
+        let audioCtx = null;
+        function getCtx() {
+            if (!audioCtx) {
+                const Ctor = window.AudioContext || window.webkitAudioContext;
+                if (!Ctor) return null;
+                audioCtx = new Ctor();
+            }
+            if (audioCtx.state === "suspended") audioCtx.resume();
+            return audioCtx;
+        }
+
+        // Karplus-Strong：噪声激励 + 延迟线平均滤波，物理建模拨弦
+        function pluck(freq, velocity) {
+            const ac = getCtx();
+            if (!ac) return;
+            const sr = ac.sampleRate;
+            const period = Math.max(2, Math.round(sr / freq));
+            const length = Math.round(sr * 2.2);
+            const buffer = ac.createBuffer(1, length, sr);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < period; i++) data[i] = Math.random() * 2 - 1;
+            const decay = 0.9965;
+            for (let i = period; i < length; i++) {
+                data[i] = (data[i - period] + data[i - period + 1]) * 0.5 * decay;
+            }
+            const src = ac.createBufferSource();
+            src.buffer = buffer;
+            const gain = ac.createGain();
+            gain.gain.value = 0.32 * (velocity === undefined ? 1 : velocity);
+            src.connect(gain);
+            gain.connect(ac.destination);
+            src.start();
+        }
+
+        const wrap = document.getElementById("guitar-strings");
+        if (wrap) {
+            const nodes = [];
+            TUNING.forEach(function (s) {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "guitar-string";
+                btn.setAttribute("aria-label", "拨响 " + s.note + " 弦");
+                const note = document.createElement("span");
+                note.className = "guitar-note";
+                note.textContent = s.note;
+                const line = document.createElement("span");
+                line.className = "guitar-line";
+                line.style.height = s.gauge + "px";
+                btn.appendChild(note);
+                btn.appendChild(line);
+                wrap.appendChild(btn);
+                nodes.push({ el: btn, freq: s.freq, touched: false });
+            });
+
+            function strike(node, velocity) {
+                pluck(node.freq, velocity);
+                node.el.classList.remove("sounding");
+                void node.el.offsetWidth;
+                node.el.classList.add("sounding");
+            }
+
+            nodes.forEach(function (node) {
+                node.el.addEventListener("pointerdown", function (e) {
+                    e.preventDefault();
+                    nodes.forEach(function (n) { n.touched = false; });
+                    node.touched = true;
+                    strike(node, 1);
+                });
+                node.el.addEventListener("pointerenter", function (e) {
+                    if (e.buttons !== 1) return;
+                    if (node.touched) return;
+                    node.touched = true;
+                    strike(node, 0.75);
+                });
+            });
+
+            document.addEventListener("pointerup", function () {
+                nodes.forEach(function (n) { n.touched = false; });
+            });
+        }
+    </script>
+</MainGridLayout>
