@@ -17,6 +17,13 @@ echo [3/3] Syncing source to GitHub...
 git add -A
 git commit -m "update: site content" >nul 2>&1
 git push
+if errorlevel 1 goto pushwarn
+goto done
+:pushwarn
+echo.
+echo [!] GitHub push failed - probably your network.
+echo [!] But the site IS deployed. Source will sync next time.
+:done
 echo.
 echo ================================
 echo    DONE: https://ruoruo.ruot466.workers.dev
