@@ -111,11 +111,11 @@ const bannerOffset =
 
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/style.css" />
 		<style is:global>
-			/* 像素字体 Zpix（最像素），自托管于 public/fonts/。
+			/* 像素字体 Fusion Pixel 12px（缝合像素字体），自托管于 public/fonts/。
 			   只在用户主动选择像素字体时才会被请求（默认不加载）。 */
 			@font-face {
-				font-family: 'Zpix';
-				src: url('/fonts/Zpix.woff2') format('woff2');
+				font-family: 'Fusion Pixel';
+				src: url('/fonts/fusion-pixel-12px.woff2') format('woff2');
 				font-display: swap;
 			}
 			/* 卡片悬停微上浮（纯 transform，不影响布局） */
@@ -127,7 +127,7 @@ const bannerOffset =
 				transform: translateY(-3px);
 				box-shadow: 0 10px 26px -14px oklch(0.62 0.12 var(--hue, 145) / 0.45);
 			}
-			html[data-font="pixel"] body { font-family: Zpix, ui-monospace, monospace; }
+			html[data-font="pixel"] body { font-family: "Fusion Pixel", ui-monospace, monospace; }
 			html[data-font="system"] body { font-family: Roboto, system-ui, -apple-system, "Microsoft YaHei", "PingFang SC", sans-serif; }
 		</style>
 
