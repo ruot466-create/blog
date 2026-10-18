@@ -1,7 +1,7 @@
 ---
 title: {{title}}
 published: {{date:YYYY-MM-DD}}
-description: 
+description: ""
 tags: []
 category: 
 draft: false

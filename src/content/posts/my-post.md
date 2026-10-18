@@ -1,9 +1,8 @@
 ---
-标题：你好
-发布时间：2026-10-12
-描述：
-标签：[]
-类别：
-草稿：假
+title: 你好
+published: 2026-10-12
+description: ""
+tags: []
+category: 
+draft: true
 ---
-
