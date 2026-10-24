@@ -2,6 +2,7 @@ import { type CollectionEntry, getCollection } from "astro:content";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import { getCategoryUrl } from "@utils/url-utils.ts";
+import { BLOG_CATEGORIES } from "../constants/blog";
 
 // // Retrieve posts and sort them by publication date
 async function getRawSortedPosts() {
@@ -99,6 +100,11 @@ export async function getCategoryList(): Promise<Category[]> {
 	});
 
 	const lst = Object.keys(count).sort((a, b) => {
+		const order = (name: string) => {
+			const index = BLOG_CATEGORIES.findIndex((topic) => topic.name === name);
+			return index === -1 ? BLOG_CATEGORIES.length : index;
+		};
+		if (order(a) !== order(b)) return order(a) - order(b);
 		return a.toLowerCase().localeCompare(b.toLowerCase());
 	});
 

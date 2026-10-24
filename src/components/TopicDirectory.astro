@@ -1,0 +1,35 @@
+---
+import { BLOG_CATEGORIES } from "../constants/blog";
+import { getCategoryList } from "../utils/content-utils";
+import { url } from "../utils/url-utils";
+
+const categories = await getCategoryList();
+---
+
+<section aria-labelledby="topic-heading" class="card-base px-6 md:px-9 py-6 mb-4">
+    <div class="flex flex-wrap items-baseline justify-between gap-2 mb-4">
+        <h2 id="topic-heading" class="text-xl font-bold text-90">按兴趣逛逛</h2>
+        <a href={url('/archive/')} class="link text-sm text-[var(--primary)]">全部文章 →</a>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {BLOG_CATEGORIES.map((topic) => {
+            const category = categories.find((item) => item.name === topic.name);
+            const Tag = category ? 'a' : 'div';
+            return (
+                <Tag href={category?.url} class:list={[
+                    'rounded-xl border border-black/10 dark:border-white/10 p-4',
+                    { 'block hover:bg-[var(--btn-plain-bg-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--primary)]': !!category },
+                ]}>
+                    <div class="flex items-center justify-between gap-3 mb-2">
+                        <h3 class="font-bold text-90">{topic.name}</h3>
+                        <span class="text-xs text-50">{category ? `${category.count} 篇文章 →` : '待更新'}</span>
+                    </div>
+                    <p class="text-sm text-75 leading-relaxed">{topic.description}</p>
+                </Tag>
+            );
+        })}
+    </div>
+    <p class="text-sm text-50 mt-4 leading-relaxed">{!categories.some((item) => item.name === '音乐') && '音乐文章还在路上，可以先试试 '}
+        <a href={url('/guitar/')} class="link text-[var(--primary)]">吉他小工具 →</a>
+    </p>
+</section>

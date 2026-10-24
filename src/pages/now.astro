@@ -1,0 +1,15 @@
+---
+import { getEntry, render } from "astro:content";
+import Markdown from "@components/misc/Markdown.astro";
+import MainGridLayout from "../layouts/MainGridLayout.astro";
+
+const entry = await getEntry("spec", "now");
+if (!entry) throw new Error("近况页内容不存在");
+const { Content } = await render(entry);
+---
+
+<MainGridLayout title="近况" description="ruoruo 最近在学什么，以及正在慢慢搭起来的东西。">
+    <div class="card-base px-6 md:px-9 py-6">
+        <Markdown class="mt-2"><Content /></Markdown>
+    </div>
+</MainGridLayout>

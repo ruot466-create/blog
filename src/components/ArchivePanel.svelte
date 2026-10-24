@@ -3,10 +3,10 @@ import { onMount } from "svelte";
 
 import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
-import { getPostUrlBySlug } from "../utils/url-utils";
+import { getPostUrlBySlug, url } from "../utils/url-utils";
 
-export let tags: string[];
-export let categories: string[];
+export let tags: string[] = [];
+export let categories: string[] = [];
 export let sortedPosts: Post[] = [];
 
 const params = new URLSearchParams(window.location.search);
@@ -19,7 +19,7 @@ interface Post {
 	data: {
 		title: string;
 		tags: string[];
-		category?: string;
+		category?: string | null;
 		published: Date;
 	};
 }
@@ -30,6 +30,12 @@ interface Group {
 }
 
 let groups: Group[] = [];
+let loaded = false;
+const filterLabel = [
+	...categories,
+	...tags.map((tag) => `#${tag}`),
+	...(uncategorized ? [i18n(I18nKey.uncategorized)] : []),
+].join(" · ");
 
 function formatDate(date: Date) {
 	const month = (date.getMonth() + 1).toString().padStart(2, "0");
@@ -82,10 +88,20 @@ onMount(async () => {
 	groupedPostsArray.sort((a, b) => b.year - a.year);
 
 	groups = groupedPostsArray;
+	loaded = true;
 });
 </script>
 
 <div class="card-base px-8 py-6">
+    <div class="flex flex-wrap items-baseline justify-between gap-3 mb-3">
+        <h1 class="text-2xl font-bold text-90">{filterLabel || i18n(I18nKey.archive)}</h1>
+        {#if filterLabel}
+            <a href={url('/archive/')} class="link text-sm text-[var(--primary)]">查看全部文章 →</a>
+        {/if}
+    </div>
+    {#if loaded && groups.length === 0}
+        <p class="text-75 py-6">这里还没有文章，之后再来看看吧。</p>
+    {/if}
     {#each groups as group}
         <div>
             <div class="flex flex-row w-full items-center h-[3.75rem]">

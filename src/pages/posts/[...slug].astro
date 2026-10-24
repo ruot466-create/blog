@@ -137,3 +137,16 @@ const jsonLd = {
     </div>
 
 </MainGridLayout>
+
+<style>
+    /* Use a full-width landscape crop; the lightbox still opens the original. */
+    :global(#post-cover) {
+        aspect-ratio: 16 / 9;
+    }
+
+    :global(#post-cover img) {
+        position: absolute;
+        inset: 0;
+        object-fit: cover;
+    }
+</style>

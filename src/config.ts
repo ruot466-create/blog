@@ -44,6 +44,11 @@ export const navBarConfig: NavBarConfig = {
 		LinkPreset.Home,
 		LinkPreset.Archive,
 		{
+			name: "近况",
+			url: "/now/",
+			external: false,
+		},
+		{
 			name: "我用什么",
 			url: "/uses/",
 			external: false,
@@ -51,6 +56,11 @@ export const navBarConfig: NavBarConfig = {
 		{
 			name: "吉他",
 			url: "/guitar/",
+			external: false,
+		},
+		{
+			name: "分享",
+			url: "/downloads/",
 			external: false,
 		},
 		LinkPreset.About,
@@ -65,7 +75,7 @@ export const navBarConfig: NavBarConfig = {
 export const profileConfig: ProfileConfig = {
 	avatar: "assets/images/avatar.png", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
 	name: "ruo3t3",
-	bio: "在学习，在记录。",
+	bio: "记录学习和日常，分享有意思的东西。",
 	links: [
 		{
 			name: "GitHub",

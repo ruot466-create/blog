@@ -1,0 +1,73 @@
+---
+import { Icon } from "astro-icon/components";
+import { DOWNLOADS } from "../data/downloads";
+import MainGridLayout from "../layouts/MainGridLayout.astro";
+import { url } from "../utils/url-utils";
+
+function formatSize(bytes: number): string {
+	if (bytes >= 1024 * 1024) {
+		return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+	}
+	if (bytes >= 1024) {
+		return `${Math.round(bytes / 1024)} KB`;
+	}
+	return `${bytes} B`;
+}
+---
+
+<MainGridLayout title="分享中心" description="公开分享的文件下载中心：安装包、压缩包和学习资料。">
+    <div class="card-base text-90 px-6 md:px-9 py-7">
+        <h1 class="text-3xl font-bold mb-2 onload-animation">分享中心</h1>
+        <p class="text-sm text-neutral-400 mb-7 onload-animation">
+            这里存放我可以公开分发的文件：软件安装包、压缩包、学习资料和项目附件。点击「下载」即可保存。
+        </p>
+
+        {DOWNLOADS.length === 0 ? (
+            <div class="flex flex-col items-center text-center gap-3 py-14">
+                <Icon name="material-symbols:download" class="text-[2.75rem] text-[var(--primary)] opacity-70" />
+                <p class="font-bold text-lg">还没有可以下载的文件</p>
+                <p class="text-sm text-neutral-400 max-w-md">
+                    这个页面用于分享公开文件。有文件上架后，这里会列出名称、说明、大小、更新时间和下载链接。
+                </p>
+            </div>
+        ) : (
+            <ul class="flex flex-col gap-4">
+                {DOWNLOADS.map((item) => (
+                    <li class="rounded-xl border border-[var(--line-divider)] p-4 md:p-5">
+                        <div class="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                    <span class="font-bold break-all">{item.name}</span>
+                                    {item.version && (
+                                        <span class="text-xs font-bold text-[var(--primary)]">v{item.version}</span>
+                                    )}
+                                </div>
+                                <p class="text-sm text-75 mt-1">{item.description}</p>
+                                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-neutral-400">
+                                    <span class="px-2 py-0.5 rounded-md bg-[var(--btn-regular-bg)] text-[var(--btn-content)] font-bold uppercase">{item.type}</span>
+                                    <span>{formatSize(item.size)}</span>
+                                    <span>更新于 {item.updated}</span>
+                                </div>
+                                {item.sha256 && (
+                                    <details class="mt-2 text-xs">
+                                        <summary class="cursor-pointer select-none text-neutral-400">SHA-256 校验值</summary>
+                                        <code class="block mt-1 px-3 py-2 rounded-md bg-[var(--codeblock-bg)] font-mono break-all text-neutral-500">{item.sha256}</code>
+                                    </details>
+                                )}
+                            </div>
+                            <a
+                                href={url(item.url)}
+                                download
+                                class="btn-regular h-10 px-5 rounded-lg font-bold active:scale-95 transition
+                                    text-[var(--btn-content)] flex items-center justify-center gap-2 shrink-0"
+                            >
+                                <Icon name="material-symbols:download" class="text-[1.25rem]" />
+                                下载
+                            </a>
+                        </div>
+                    </li>
+                ))}
+            </ul>
+        )}
+    </div>
+</MainGridLayout>

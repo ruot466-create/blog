@@ -72,7 +72,7 @@
         { title: "The Way We Were", artist: "山本剛", src: "/audio/the-way-we-were.mp3" },
     ];
 
-    const audio = document.getElementById("mp-audio");
+    const audio = document.querySelector<HTMLAudioElement & { __mpInited?: boolean }>("#mp-audio");
     const toggle = document.getElementById("mp-toggle");
     const prev = document.getElementById("mp-prev");
     const next = document.getElementById("mp-next");
@@ -89,21 +89,21 @@
 
     let index = 0;
 
-    function fmt(sec) {
+    function fmt(sec: number) {
         if (!isFinite(sec)) return "0:00";
         const m = Math.floor(sec / 60);
         const s = Math.floor(sec % 60);
         return m + ":" + (s < 10 ? "0" : "") + s;
     }
 
-    function showPlaying(playing) {
+    function showPlaying(playing: boolean) {
         iconPlay?.classList.toggle("hidden", playing);
         iconPause?.classList.toggle("hidden", !playing);
         disc?.classList.toggle("spinning", playing);
     }
 
-    function load(i, autoplay) {
-        if (!TRACKS.length) return;
+    function load(i: number, autoplay: boolean) {
+        if (!audio || !TRACKS.length) return;
         index = (i + TRACKS.length) % TRACKS.length;
         const t = TRACKS[index];
         audio.src = t.src;
