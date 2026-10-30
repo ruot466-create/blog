@@ -14,7 +14,7 @@ export interface DownloadItem {
 	size: number;
 	/** 更新日期，格式 YYYY-MM-DD */
 	updated: string;
-	/** 下载地址，以 /downloads/ 开头 */
+	/** 下载地址：站内 /downloads/... 或 http(s) 外部文件链接 */
 	url: string;
 	/** SHA-256 校验值，可选；安装包等重要文件建议提供 */
 	sha256?: string;

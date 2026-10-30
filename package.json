@@ -6,6 +6,7 @@
     "dev": "astro dev",
     "start": "astro dev",
     "check": "astro check",
+    "test": "node --test scripts/new-post.test.js scripts/new-download.test.js scripts/guitar-metronome.test.js scripts/download-validation.test.js scripts/rss-content.test.js scripts/content-utils.test.js",
     "build": "astro build && pagefind --site dist",
     "preview": "astro preview",
     "astro": "astro",

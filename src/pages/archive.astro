@@ -9,6 +9,9 @@ const sortedPostsList = await getSortedPostsList();
 ---
 
 <MainGridLayout title={i18n(I18nKey.archive)}>
-    <ArchivePanel sortedPosts={sortedPostsList} client:only="svelte"></ArchivePanel>
+    <noscript>
+        <p class="card-base px-8 py-4 mb-4 text-75">当前显示全部文章。分类和标签筛选需要启用 JavaScript。</p>
+    </noscript>
+    <ArchivePanel sortedPosts={sortedPostsList} client:load></ArchivePanel>
 </MainGridLayout>
 

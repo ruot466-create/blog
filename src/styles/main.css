@@ -24,7 +24,7 @@
         @apply top-[5.25rem] rounded-[var(--radius-large)] overflow-hidden bg-[var(--float-panel-bg)] transition shadow-xl dark:shadow-none
     }
     .float-panel-closed {
-        @apply -translate-y-1 opacity-0 pointer-events-none
+        @apply invisible -translate-y-1 opacity-0 pointer-events-none
     }
     .search-panel mark {
         @apply bg-transparent text-[var(--primary)]

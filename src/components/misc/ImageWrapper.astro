@@ -1,5 +1,5 @@
 ---
-import path from "node:path";
+import { getLocalImage } from "../../utils/image-utils";
 
 interface Props {
 	id?: string;
@@ -16,32 +16,13 @@ import { url } from "../../utils/url-utils";
 const { id, src, alt, position = "center", basePath = "/" } = Astro.props;
 const className = Astro.props.class;
 
-const isLocal = !(
-	src.startsWith("/") ||
-	src.startsWith("http") ||
-	src.startsWith("https") ||
-	src.startsWith("data:")
-);
-const isPublic = src.startsWith("/");
+const isRemote = /^(?:https?:)?\/\//i.test(src) || src.startsWith("data:");
+const isPublic = src.startsWith("/") && !isRemote;
+const isLocal = !isPublic && !isRemote;
 
-// TODO temporary workaround for images dynamic import
-// https://github.com/withastro/astro/issues/3373
-// biome-ignore lint/suspicious/noImplicitAnyLet: <check later>
-let img;
-if (isLocal) {
-	const files = import.meta.glob<ImageMetadata>("../../**", {
-		import: "default",
-	});
-	let normalizedPath = path
-		.normalize(path.join("../../", basePath, src))
-		.replace(/\\/g, "/");
-	const file = files[normalizedPath];
-	if (!file) {
-		console.error(
-			`\n[ERROR] Image file not found: ${normalizedPath.replace("../../", "src/")}`,
-		);
-	}
-	img = await file();
+const img = isLocal ? await getLocalImage(src, basePath) : undefined;
+if (isLocal && !img) {
+	throw new Error(`找不到本地图片：${src}（相对 src/${basePath}）`);
 }
 
 const imageClass = "w-full h-full object-cover";

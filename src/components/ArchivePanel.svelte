@@ -9,10 +9,14 @@ export let tags: string[] = [];
 export let categories: string[] = [];
 export let sortedPosts: Post[] = [];
 
-const params = new URLSearchParams(window.location.search);
-tags = params.has("tag") ? params.getAll("tag") : [];
-categories = params.has("category") ? params.getAll("category") : [];
-const uncategorized = params.get("uncategorized");
+let uncategorized = false;
+
+onMount(() => {
+	const params = new URLSearchParams(window.location.search);
+	tags = params.getAll("tag");
+	categories = params.getAll("category");
+	uncategorized = params.get("uncategorized") === "true";
+});
 
 interface Post {
 	slug: string;
@@ -30,16 +34,15 @@ interface Group {
 }
 
 let groups: Group[] = [];
-let loaded = false;
-const filterLabel = [
+$: filterLabel = [
 	...categories,
 	...tags.map((tag) => `#${tag}`),
 	...(uncategorized ? [i18n(I18nKey.uncategorized)] : []),
 ].join(" · ");
 
 function formatDate(date: Date) {
-	const month = (date.getMonth() + 1).toString().padStart(2, "0");
-	const day = date.getDate().toString().padStart(2, "0");
+	const month = (date.getUTCMonth() + 1).toString().padStart(2, "0");
+	const day = date.getUTCDate().toString().padStart(2, "0");
 	return `${month}-${day}`;
 }
 
@@ -47,8 +50,13 @@ function formatTag(tagList: string[]) {
 	return tagList.map((t) => `#${t}`).join(" ");
 }
 
-onMount(async () => {
-	let filteredPosts: Post[] = sortedPosts;
+function groupPosts(
+	posts: Post[],
+	tags: string[],
+	categories: string[],
+	uncategorized: boolean,
+): Group[] {
+	let filteredPosts: Post[] = posts;
 
 	if (tags.length > 0) {
 		filteredPosts = filteredPosts.filter(
@@ -70,7 +78,7 @@ onMount(async () => {
 
 	const grouped = filteredPosts.reduce(
 		(acc, post) => {
-			const year = post.data.published.getFullYear();
+			const year = post.data.published.getUTCFullYear();
 			if (!acc[year]) {
 				acc[year] = [];
 			}
@@ -87,9 +95,10 @@ onMount(async () => {
 
 	groupedPostsArray.sort((a, b) => b.year - a.year);
 
-	groups = groupedPostsArray;
-	loaded = true;
-});
+	return groupedPostsArray;
+}
+
+$: groups = groupPosts(sortedPosts, tags, categories, uncategorized);
 </script>
 
 <div class="card-base px-8 py-6">
@@ -99,7 +108,7 @@ onMount(async () => {
             <a href={url('/archive/')} class="link text-sm text-[var(--primary)]">查看全部文章 →</a>
         {/if}
     </div>
-    {#if loaded && groups.length === 0}
+    {#if groups.length === 0}
         <p class="text-75 py-6">这里还没有文章，之后再来看看吧。</p>
     {/if}
     {#each groups as group}

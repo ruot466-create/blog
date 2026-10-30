@@ -3,12 +3,12 @@ import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import Icon from "@iconify/svelte";
 import {
+	type FontChoice,
 	getDefaultHue,
 	getFont,
 	getHue,
 	setFont,
 	setHue,
-	type FontChoice,
 } from "@utils/setting-utils";
 
 let hue = getHue();
@@ -23,6 +23,7 @@ const FONTS: { id: FontChoice; label: string }[] = [
 
 function resetHue() {
 	hue = getDefaultHue();
+	document.getElementById("colorSlider")?.focus();
 }
 
 $: if (hue || hue === 0) {
@@ -41,7 +42,7 @@ $: if (font) {
             before:absolute before:-left-3 before:top-[0.33rem]"
         >
             {i18n(I18nKey.themeColor)}
-            <button aria-label="Reset to Default" class="btn-regular w-7 h-7 rounded-md  active:scale-90 will-change-transform"
+            <button aria-label="恢复默认配色" disabled={hue === defaultHue} aria-hidden={hue === defaultHue} class="btn-regular w-7 h-7 rounded-md  active:scale-90 will-change-transform"
                     class:opacity-0={hue === defaultHue} class:pointer-events-none={hue === defaultHue} on:click={resetHue}>
                 <div class="text-[var(--btn-content)]">
                     <Icon icon="fa6-solid:arrow-rotate-left" class="text-[0.875rem]"></Icon>
@@ -67,13 +68,14 @@ $: if (font) {
         >
             字体
         </div>
-        <div class="flex gap-2 mt-3">
+        <div class="flex gap-2 mt-3" role="group" aria-label="字体">
             {#each FONTS as item}
                 <button
                     class="btn-regular flex-1 h-8 rounded-md text-sm font-bold active:scale-95 transition
                            {font === item.id ? 'ring-2 ring-[var(--primary)]' : 'opacity-70'}"
                     on:click={() => (font = item.id)}
                     aria-label={"使用" + item.label}
+                    aria-pressed={font === item.id}
                 >{item.label}</button>
             {/each}
         </div>

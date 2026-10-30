@@ -755,7 +755,7 @@ import MainGridLayout from "../layouts/MainGridLayout.astro";
             // 渐快：每 8 拍 +4 BPM
             if (accelBox && accelBox.checked && bpmInput) {
                 accelCounter++;
-                if (accelCounter >= 8 * (beats / 4)) {
+                if (accelCounter >= 8) {
                     accelCounter = 0;
                     const next = Math.min(200, Number(bpmInput.value) + 4);
                     bpmInput.value = String(next);

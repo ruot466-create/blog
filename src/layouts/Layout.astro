@@ -3,6 +3,7 @@ import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 
+import { getImage } from "astro:assets";
 import ConfigCarrier from "@components/ConfigCarrier.astro";
 import { profileConfig, siteConfig } from "@/config";
 import {
@@ -17,18 +18,48 @@ import {
 } from "../constants/constants";
 import { defaultFavicons } from "../constants/icon";
 import type { Favicon } from "../types/config";
+import { getLocalImage } from "../utils/image-utils";
 import { pathsEqual, url } from "../utils/url-utils";
 import "katex/dist/katex.css";
 
 interface Props {
 	title?: string;
 	banner?: string;
+	bannerBasePath?: string;
 	description?: string;
 	lang?: string;
 	setOGTypeArticle?: boolean;
 }
 
-let { title, banner, description, lang, setOGTypeArticle } = Astro.props;
+let { title, banner, bannerBasePath, description, lang, setOGTypeArticle } =
+	Astro.props;
+
+// Sharing cards use the article cover when available, then the configured banner.
+async function resolveSocialImage(
+	source?: string,
+	basePath = "/",
+): Promise<string | undefined> {
+	if (!source?.trim()) return undefined;
+	if (/^(?:https?:)?\/\//i.test(source)) return source;
+	if (source.startsWith("/")) return url(source);
+	const image = await getLocalImage(source, basePath);
+	if (!image) return undefined;
+	return (
+		await getImage({
+			src: image,
+			format: "jpeg",
+			width: Math.min(image.width, 1200),
+		})
+	).src;
+}
+const coverImage = await resolveSocialImage(banner, bannerBasePath);
+const socialImagePath =
+	coverImage ?? (await resolveSocialImage(siteConfig.banner.src));
+const socialImage = socialImagePath
+	? new URL(socialImagePath, Astro.site ?? Astro.url).href
+	: undefined;
+const socialImageAlt =
+	coverImage && title ? `${title}的文章封面` : `${siteConfig.title}的站点横幅`;
 
 // apply a class to the body element to decide the height of the banner, only used for initial page load
 // Swup can update the body for each page visit, but it's after the page transition, causing a delay for banner height change
@@ -94,6 +125,13 @@ const bannerOffset =
         <meta property="og:type" content="website" />
         )}
 
+		{socialImage && <>
+			<meta property="og:image" content={socialImage}>
+			<meta property="og:image:alt" content={socialImageAlt}>
+			<meta name="twitter:image" content={socialImage}>
+			<meta name="twitter:image:alt" content={socialImageAlt}>
+		</>}
+
 		<meta name="twitter:card" content="summary_large_image">
 		<meta property="twitter:url" content={Astro.url}>
 		<meta name="twitter:title" content={pageTitle}>
@@ -134,7 +172,11 @@ const bannerOffset =
 		<!-- Set the theme before the page is rendered to avoid a flash -->
 		<script is:inline define:vars={{DEFAULT_THEME, LIGHT_MODE, DARK_MODE, AUTO_MODE, BANNER_HEIGHT_EXTEND, PAGE_WIDTH, configHue}}>
 			// Load the theme from local storage
-			const theme = localStorage.getItem('theme') || DEFAULT_THEME;
+			let theme = DEFAULT_THEME;
+			try {
+				const storedTheme = localStorage.getItem('theme');
+				if ([LIGHT_MODE, DARK_MODE, AUTO_MODE].includes(storedTheme)) theme = storedTheme;
+			} catch (e) {}
 			switch (theme) {
 				case LIGHT_MODE:
 					document.documentElement.classList.remove('dark');
@@ -155,7 +197,8 @@ const bannerOffset =
 			try {
 				var storedHue = localStorage.getItem('hue');
 				var hueStamp = localStorage.getItem('hue-config');
-				if (storedHue && hueStamp === String(configHue)) hue = Number(storedHue);
+				const parsedHue = Number(storedHue);
+				if (storedHue !== null && hueStamp === String(configHue) && Number.isFinite(parsedHue) && parsedHue >= 0 && parsedHue <= 360) hue = parsedHue;
 			} catch (e) {}
 			document.documentElement.style.setProperty('--hue', hue);
 
@@ -186,6 +229,8 @@ const bannerOffset =
 	<body class=" min-h-screen transition " class:list={[{"lg:is-home": isHomePage, "enable-banner": enableBanner}]}
 		  data-overlayscrollbars-initialize
 	>
+		<a id="skip-to-content" href="#swup-container"
+			class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-lg focus:bg-[var(--card-bg)] focus:px-4 focus:py-3 focus:text-[var(--primary)] focus:outline focus:outline-2 focus:outline-[var(--primary)]">跳到正文</a>
 		<ConfigCarrier></ConfigCarrier>
 		<slot />
 
@@ -293,26 +338,29 @@ function disableAnimation() {
 
 const bannerEnabled = !!document.getElementById('banner-wrapper')
 
-function setClickOutsideToClose(panel: string, ignores: string[]) {
+function setClickOutsideToClose(panel: string, ignores: string[], control: string) {
+	const closePanel = () => {
+		const panelDom = document.getElementById(panel);
+		panelDom?.classList.add("float-panel-closed");
+		document.getElementById(control)?.setAttribute("aria-expanded", "false");
+	};
 	document.addEventListener("click", event => {
-		let panelDom = document.getElementById(panel);
-		let tDom = event.target;
-		if (!(tDom instanceof Node)) return;		// Ensure the event target is an HTML Node
-		for (let ig of ignores) {
-			let ie = document.getElementById(ig)
-			if (ie == tDom || (ie?.contains(tDom))) {
-				return;
-			}
-		}
-		panelDom!.classList.add("float-panel-closed");
-		if (panel === "nav-menu-panel") {
-			document.getElementById("nav-menu-switch")?.setAttribute("aria-expanded", "false");
-		}
+		if (!(event.target instanceof Node)) return;
+		if (ignores.some(id => document.getElementById(id)?.contains(event.target as Node))) return;
+		closePanel();
+	});
+	document.addEventListener("keydown", event => {
+		if (event.key !== "Escape") return;
+		const panelDom = document.getElementById(panel);
+		if (!panelDom || panelDom.classList.contains("float-panel-closed")) return;
+		const restoreFocus = panelDom.contains(document.activeElement);
+		closePanel();
+		if (restoreFocus) document.getElementById(control)?.focus();
 	});
 }
-setClickOutsideToClose("display-setting", ["display-setting", "display-settings-switch"])
-setClickOutsideToClose("nav-menu-panel", ["nav-menu-panel", "nav-menu-switch"])
-setClickOutsideToClose("search-panel", ["search-panel", "search-bar", "search-switch"])
+setClickOutsideToClose("display-setting", ["display-setting", "display-settings-switch"], "display-settings-switch")
+setClickOutsideToClose("nav-menu-panel", ["nav-menu-panel", "nav-menu-switch"], "nav-menu-switch")
+setClickOutsideToClose("search-panel", ["search-panel", "search-bar", "search-switch"], "search-switch")
 
 
 function loadTheme() {

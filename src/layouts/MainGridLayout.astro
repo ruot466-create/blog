@@ -18,6 +18,7 @@ import Layout from "./Layout.astro";
 interface Props {
 	title?: string;
 	banner?: string;
+	bannerBasePath?: string;
 	description?: string;
 	lang?: string;
 	setOGTypeArticle?: boolean;
@@ -27,6 +28,7 @@ interface Props {
 const {
 	title,
 	banner,
+	bannerBasePath,
 	description,
 	lang,
 	setOGTypeArticle,
@@ -41,7 +43,7 @@ const mainPanelTop = siteConfig.banner.enable
 	: "5.5rem";
 ---
 
-<Layout title={title} banner={banner} description={description} lang={lang} setOGTypeArticle={setOGTypeArticle}>
+<Layout title={title} banner={banner} bannerBasePath={bannerBasePath} description={description} lang={lang} setOGTypeArticle={setOGTypeArticle}>
 
 <!-- Navbar -->
 <slot slot="head" name="head"></slot>
@@ -82,7 +84,7 @@ const mainPanelTop = siteConfig.banner.enable
 
             <SideBar class="mb-4 row-start-2 row-end-3 col-span-2 lg:row-start-1 lg:row-end-2 lg:col-span-1 lg:max-w-[17.5rem] onload-animation" headings={headings}></SideBar>
 
-            <main id="swup-container" class="transition-swup-fade col-span-2 lg:col-span-1 overflow-hidden">
+            <main id="swup-container" tabindex="-1" class="transition-swup-fade col-span-2 lg:col-span-1 overflow-hidden">
                 <div id="content-wrapper" class="onload-animation">
                     <!-- the overflow-hidden here prevent long text break the layout-->
                     <!-- make id different from windows.swup global property -->

@@ -51,8 +51,8 @@ const getPageUrl = (p: number) => {
 };
 ---
 
-<div class:list={[className, "flex flex-row gap-3 justify-center"]} style={style}>
-    <a href={page.url.prev || ""} aria-label={page.url.prev ? "Previous Page" : null}
+<nav aria-label="文章分页" class:list={[className, "flex flex-row gap-3 justify-center"]} style={style}>
+    <a href={page.url.prev} aria-label="上一页" aria-disabled={!page.url.prev ? "true" : undefined} tabindex={!page.url.prev ? -1 : undefined}
        class:list={["btn-card overflow-hidden rounded-lg text-[var(--primary)] w-11 h-11",
            {"disabled": page.url.prev == undefined}
        ]}
@@ -64,21 +64,21 @@ const getPageUrl = (p: number) => {
             if (p == HIDDEN)
                 return <Icon name="material-symbols:more-horiz" class="mx-1"/>;
             if (p == page.currentPage)
-                return <div class="h-11 w-11 rounded-lg bg-[var(--primary)] flex items-center justify-center
+                return <span aria-current="page" aria-label={`第 ${p} 页，当前页`} class="h-11 w-11 rounded-lg bg-[var(--primary)] flex items-center justify-center
                     font-bold text-white dark:text-black/70"
                 >
                     {p}
-                </div>
-            return <a href={url(getPageUrl(p))} aria-label={`Page ${p}`}
+                </span>
+            return <a href={url(getPageUrl(p))} aria-label={`第 ${p} 页`}
                 class="btn-card w-11 h-11 rounded-lg overflow-hidden active:scale-[0.85]"
             >{p}</a>
         })}
     </div>
-    <a href={page.url.next || ""} aria-label={page.url.next ? "Next Page" : null}
+    <a href={page.url.next} aria-label="下一页" aria-disabled={!page.url.next ? "true" : undefined} tabindex={!page.url.next ? -1 : undefined}
        class:list={["btn-card overflow-hidden rounded-lg text-[var(--primary)] w-11 h-11",
            {"disabled": page.url.next == undefined}
        ]}
     >
         <Icon name="material-symbols:chevron-right-rounded" class="text-[1.75rem]"></Icon>
     </a>
-</div>
+</nav>

@@ -13,9 +13,9 @@
         </div>
     </div>
 
-    <div id="mp-bar" class="w-full h-1.5 rounded-full bg-[var(--btn-regular-bg)] cursor-pointer relative mb-1.5">
-        <div id="mp-fill" class="h-full rounded-full bg-[var(--primary)]" style="width:0%"></div>
-    </div>
+    <input id="mp-bar" type="range" min="0" max="1" step="1" value="0" disabled
+        aria-label="播放进度" aria-valuetext="0:00 / 0:00"
+        class="w-full h-1.5 accent-[var(--primary)] cursor-pointer disabled:cursor-default mb-1.5" />
 
     <div class="flex justify-between text-[0.68rem] text-neutral-400 mb-3">
         <span id="mp-now">0:00</span>
@@ -78,8 +78,7 @@
     const next = document.getElementById("mp-next");
     const iconPlay = document.getElementById("mp-icon-play");
     const iconPause = document.getElementById("mp-icon-pause");
-    const bar = document.getElementById("mp-bar");
-    const fill = document.getElementById("mp-fill");
+    const bar = document.querySelector<HTMLInputElement>("#mp-bar");
     const now = document.getElementById("mp-now");
     const dur = document.getElementById("mp-dur");
     const hint = document.getElementById("mp-hint");
@@ -88,6 +87,7 @@
     const disc = document.querySelector(".mp-disc");
 
     let index = 0;
+    let playRequest = 0;
 
     function fmt(sec: number) {
         if (!isFinite(sec)) return "0:00";
@@ -97,13 +97,46 @@
     }
 
     function showPlaying(playing: boolean) {
+        toggle?.setAttribute("aria-label", playing ? "暂停" : "播放");
         iconPlay?.classList.toggle("hidden", playing);
         iconPause?.classList.toggle("hidden", !playing);
         disc?.classList.toggle("spinning", playing);
     }
 
+    function showPlaybackError(error?: unknown) {
+        if (hint) {
+            hint.textContent = error instanceof DOMException && error.name === "NotAllowedError"
+                ? "浏览器禁止自动播放，点 ▶ 开始"
+                : "音频暂时无法播放，请稍后重试或切换曲目。";
+            hint.classList.remove("hidden");
+        }
+        showPlaying(false);
+    }
+
+    async function playCurrent() {
+        if (!audio) return;
+        const request = ++playRequest;
+        try {
+            await audio.play();
+        } catch (error) {
+            if (request === playRequest) showPlaybackError(error);
+        }
+    }
+
+    function updateProgress() {
+        if (!audio || !bar) return;
+        const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
+        bar.disabled = duration <= 0;
+        bar.max = String(duration || 1);
+        bar.value = String(duration > 0 ? Math.min(audio.currentTime, duration) : 0);
+        bar.setAttribute("aria-valuetext", fmt(audio.currentTime) + " / " + fmt(duration));
+        if (now) now.textContent = fmt(audio.currentTime);
+        if (dur) dur.textContent = fmt(duration);
+    }
+
     function load(i: number, autoplay: boolean) {
         if (!audio || !TRACKS.length) return;
+        ++playRequest;
         index = (i + TRACKS.length) % TRACKS.length;
         const t = TRACKS[index];
         audio.src = t.src;
@@ -111,11 +144,14 @@
         if (artistEl) artistEl.textContent = t.artist;
         if (dur) dur.textContent = "0:00";
         if (now) now.textContent = "0:00";
-        if (fill) fill.style.width = "0%";
-        if (autoplay) {
-            const p = audio.play();
-            if (p && p.catch) p.catch(function () { hint?.classList.remove("hidden"); });
+        if (bar) {
+            bar.disabled = true;
+            bar.value = "0";
+            bar.max = "1";
+            bar.setAttribute("aria-valuetext", "0:00 / 0:00");
         }
+        hint?.classList.add("hidden");
+        if (autoplay) void playCurrent();
     }
 
     if (audio && TRACKS.length && !audio.__mpInited) {
@@ -125,32 +161,27 @@
         audio.volume = 0.6;
         load(0, false);
 
-        audio.addEventListener("loadedmetadata", function () {
-            if (dur) dur.textContent = fmt(audio.duration);
-        });
-        audio.addEventListener("timeupdate", function () {
-            const p = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
-            if (fill) fill.style.width = p + "%";
-            if (now) now.textContent = fmt(audio.currentTime);
-        });
+        audio.addEventListener("loadedmetadata", updateProgress);
+        audio.addEventListener("durationchange", updateProgress);
+        audio.addEventListener("timeupdate", updateProgress);
+        audio.addEventListener("error", () => showPlaybackError());
         audio.addEventListener("play", function () { showPlaying(true); hint?.classList.add("hidden"); });
         audio.addEventListener("pause", function () { showPlaying(false); });
         audio.addEventListener("ended", function () { load(index + 1, true); });
 
         toggle?.addEventListener("click", function () {
-            if (audio.paused) audio.play(); else audio.pause();
+            if (audio.paused) void playCurrent();
+            else { ++playRequest; audio.pause(); }
         });
         prev?.addEventListener("click", function () { load(index - 1, true); });
         next?.addEventListener("click", function () { load(index + 1, true); });
-        bar?.addEventListener("click", function (e) {
-            const rect = bar.getBoundingClientRect();
-            const ratio = (e.clientX - rect.left) / rect.width;
-            if (audio.duration) audio.currentTime = ratio * audio.duration;
+        bar?.addEventListener("input", function () {
+            if (Number.isFinite(audio.duration) && audio.duration > 0) {
+                audio.currentTime = Math.max(0, Math.min(Number(bar.value), audio.duration));
+                updateProgress();
+            }
         });
 
-        const attempt = audio.play();
-        if (attempt && attempt.catch) {
-            attempt.catch(function () { hint?.classList.remove("hidden"); });
-        }
+        void playCurrent();
     }
 </script>

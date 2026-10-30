@@ -4,6 +4,10 @@ import { DOWNLOADS } from "../data/downloads";
 import MainGridLayout from "../layouts/MainGridLayout.astro";
 import { url } from "../utils/url-utils";
 
+function isExternalDownload(href: string): boolean {
+	return /^https?:\/\//i.test(href);
+}
+
 function formatSize(bytes: number): string {
 	if (bytes >= 1024 * 1024) {
 		return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -56,8 +60,8 @@ function formatSize(bytes: number): string {
                                 )}
                             </div>
                             <a
-                                href={url(item.url)}
-                                download
+                                href={isExternalDownload(item.url) ? item.url : url(item.url)}
+                                download={isExternalDownload(item.url) ? undefined : true}
                                 class="btn-regular h-10 px-5 rounded-lg font-bold active:scale-95 transition
                                     text-[var(--btn-content)] flex items-center justify-center gap-2 shrink-0"
                             >
